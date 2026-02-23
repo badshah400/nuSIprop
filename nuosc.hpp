@@ -66,7 +66,7 @@ public:
 
   enum ParName {SSQ_T12=0, SSQ_T23, SSQ_T13, DEL_CP, DEL_MSQ_21, DEL_MSQ_31};
 
-  inline double operator()(const ParName & p, const ValPos & e)
+  inline double operator()(const ParName & p, const ValPos & e) const
   {
     double r;
     switch(p)
@@ -81,12 +81,12 @@ public:
     return r;
   }
 
-  inline double central(const ParName & p)
+  inline double central(const ParName & p) const
   {
     return this->operator()(p, ValPos::CENTRAL);
   }
 
-  inline std::array<double, 2> one_sigma_limit(const ParName & p)
+  inline std::array<double, 2> one_sigma_limit(const ParName & p) const
   {
     return {
       this->operator()(p, ValPos::MINUS_1SIG),
@@ -95,7 +95,7 @@ public:
 
   }
 
-  inline std::array<double, 2> three_sigma_limit(const ParName & p)
+  inline std::array<double, 2> three_sigma_limit(const ParName & p) const
   {
     return {
       this->operator()(p, ValPos::MINUS_3SIG),
