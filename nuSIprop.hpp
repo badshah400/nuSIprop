@@ -125,7 +125,7 @@ public:
     zmax = z[N_steps_z - 1];
 
     // Sines and cosines of mixing angles
-    mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
+    const mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
     /* Compute neutrino mixing*/
     double s12=sqrt(nu_par.central(mixing_params::ParName::SSQ_T12));
     double c12=sqrt(1.0 - SQR(s12)); 
@@ -165,12 +165,14 @@ public:
 
     /* Recompute quantities that may change from one run to another */
     // Neutrino masses
-    double dmq21 = 7.42e-5; // [eV^2] Normal Ordering, NuFIT5.0
-    double dmqAT;
-    if(normal_ordering)
-      dmqAT = 2.514e-3; // dmq31 [eV^2] Normal Ordering, NuFIT5.0
-    else
-      dmqAT = -2.497e-3; // dmq32 [eV^2] Normal Ordering, NuFIT5.0
+    const double dmq21{
+      NU_FIT61_NOR.central(mixing_params::ParName::DEL_MSQ_21)
+    }; // [eV^2] Normal Ordering, NuFIT6.1
+    const double dmqAT{
+      normal_ordering
+        ? NU_FIT61_NOR.central(mixing_params::ParName::DEL_MSQ_31)
+        : -1.0 * NU_FIT61_INV.central(mixing_params::ParName::DEL_MSQ_31)
+    };
     
     double mL = nuSIaux::getmL(mntot, dmq21, dmqAT);
     if(normal_ordering){
