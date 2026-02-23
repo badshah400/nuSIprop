@@ -3,6 +3,7 @@
 
 #include "interp.hpp"
 #include "aux.hpp"
+#include "nuosc.hpp"
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_sf_dilog.h>
@@ -123,26 +124,17 @@ public:
       z[i] = (1+0) * pow(Emax[0]/Emin[0], i) - 1;
     zmax = z[N_steps_z - 1];
 
-    /* Compute neutrino mixing*/
-    double t12, t13, t23, dcp;
-    if(normal_ordering){
-      t12= 33.44 * (M_PI/180); //theta12 in rad. Normal Ordering, NuFIT5.0
-      t13= 8.57 * (M_PI/180); //theta13 in rad. Normal Ordering, NuFIT5.0
-      t23= 49.0 * (M_PI/180); //theta23 in rad. Normal Ordering, NuFIT5.0
-      dcp= 195.0 * (M_PI/180);  // delta_CP in rad. Normal Ordering, NuFIT5.0
-    } else{
-      t12= 33.45 * (M_PI/180); //theta12 in rad. Inverted Ordering, NuFIT5.0
-      t13= 8.61 * (M_PI/180); //theta13 in rad. Inverted Ordering, NuFIT5.0
-      t23= 49.3 * (M_PI/180); //theta23 in rad. Inverted Ordering, NuFIT5.0
-      dcp= 286.0 * (M_PI/180);  // delta_CP in rad. Inverted Ordering, NuFIT5.0
-    }
     // Sines and cosines of mixing angles
-    double c12=cos(t12); 
-    double c13=cos(t13);
-    double c23=cos(t23);
-    double s12=sin(t12);
-    double s13=sin(t13);
-    double s23=sin(t23);
+    mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
+    /* Compute neutrino mixing*/
+    double s12=sqrt(nu_par.central(mixing_params::ParName::SSQ_T12));
+    double c12=sqrt(1.0 - SQR(s12)); 
+    double s13=sqrt(nu_par.central(mixing_params::ParName::SSQ_T13));
+    double c13=sqrt(1.0 - SQR(s13));
+    double s23=sqrt(nu_par.central(mixing_params::ParName::SSQ_T23));
+    double c23=sqrt(1.0 - SQR(s23));
+
+    double dcp{nu_par.central(mixing_params::ParName::DEL_CP)};
     std::complex<double> del(cos(dcp), sin(dcp));
     // Standard leptonic mixing matrix
     U[0][0]=c12*c13;
