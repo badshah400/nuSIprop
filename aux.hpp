@@ -1,11 +1,15 @@
 #include <gsl/gsl_poly.h>
 #include <gsl/gsl_sf_dilog.h>
 #include <complex.h>
+#include <iostream>
 
 /**
  * Auxiliary functions and constants for nuSIprop
  * Author: Ivan Esteban
  */
+
+#define SQR(x)  ((x)*(x))  // square of a number
+#define CUB(x)  ((x)*(x)*(x))  // cube of a number
 
 namespace nuSIaux{
 
