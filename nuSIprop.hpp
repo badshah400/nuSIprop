@@ -17,6 +17,32 @@
 
 namespace nuSIprop{
 
+struct cross_sec
+{
+  double g;
+  double mediator_mass;
+  double decay_width;
+  double operator()(const double sminus, const double splus) const
+  {
+    double Gamma_s{0.0};
+      if (splus < 1e-5) // We Taylor-expand atandiff to avoid roundoff errors
+	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(this->mediator_mass)*this->decay_width) *
+	  (2*this->mediator_mass * ( (this->decay_width/this->mediator_mass*(1 + SQR(this->decay_width/this->mediator_mass) + 2*sminus))/SQR(1+SQR(this->decay_width/this->mediator_mass)) * (splus-sminus)
+		      +(this->decay_width/this->mediator_mass)/SQR(1+SQR(this->decay_width/this->mediator_mass)) * SQR(splus-sminus) )
+	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  - 
+		   log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * sminus * (sminus-2)) )
+	   );
+      else
+	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(this->mediator_mass)*this->decay_width) *
+	  (2*this->mediator_mass * nuSIaux::atandiff( this->mediator_mass*(splus-1) / this->decay_width,
+				       this->mediator_mass*(sminus-1) / this->decay_width)
+	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  - 
+		   log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * sminus * (sminus-2)) )
+	   );
+    return Gamma_s;
+  }
+};
+
 class calculate_flux
 {
   /**
@@ -676,21 +702,8 @@ private:
       double sminus = 2*mn[j]*Em/SQR(mphi);
 
       /* s-channel */
-      double Gamma_s;
-      if (splus < 1e-5) // We Taylor-expand atandiff to avoid roundoff errors
-	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(mphi)*Ga) *
-	  (2*mphi * ( (Ga/mphi*(1 + SQR(Ga/mphi) + 2*sminus))/SQR(1+SQR(Ga/mphi)) * (splus-sminus)
-		      +(Ga/mphi)/SQR(1+SQR(Ga/mphi)) * SQR(splus-sminus) )
-	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * splus * (splus-2))  - 
-		   log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * sminus * (sminus-2)) )
-	   );
-      else
-	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(mphi)*Ga) *
-	  (2*mphi * nuSIaux::atandiff( mphi*(splus-1) / Ga,
-				       mphi*(sminus-1) / Ga)
-	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * splus * (splus-2))  - 
-		   log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * sminus * (sminus-2)) )
-	   );
+      cross_sec x_s = {.g=g, .mediator_mass=mphi, .decay_width=Ga};
+      double Gamma_s = x_s(sminus, splus);
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 \sum_{kl} |U_{flav k}|^2 |U_{flav l}|^2
       Gamma_s *= std::norm(U[flav][j]);
       tot += SQR(mphi) / (2*mn[j]) * Gamma_s;
