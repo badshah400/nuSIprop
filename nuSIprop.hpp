@@ -7,7 +7,7 @@
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_sf_dilog.h>
-#include <complex.h>     
+#include <complex.h>
 #include <iostream>
 #include <cmath>
 #include <cstring>
@@ -29,14 +29,14 @@ struct cross_sec
 	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(this->mediator_mass)*this->decay_width) *
 	  (2*this->mediator_mass * ( (this->decay_width/this->mediator_mass*(1 + SQR(this->decay_width/this->mediator_mass) + 2*sminus))/SQR(1+SQR(this->decay_width/this->mediator_mass)) * (splus-sminus)
 		      +(this->decay_width/this->mediator_mass)/SQR(1+SQR(this->decay_width/this->mediator_mass)) * SQR(splus-sminus) )
-	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  - 
+	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  -
 		   log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * sminus * (sminus-2)) )
 	   );
       else
 	Gamma_s = SQR(SQR(g)) / (32*M_PI*SQR(this->mediator_mass)*this->decay_width) *
 	  (2*this->mediator_mass * nuSIaux::atandiff( this->mediator_mass*(splus-1) / this->decay_width,
 				       this->mediator_mass*(sminus-1) / this->decay_width)
-	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  - 
+	   + this->decay_width * (log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * splus * (splus-2))  -
 		   log1p(SQR(this->mediator_mass) / (SQR(this->mediator_mass) + SQR(this->decay_width)) * sminus * (sminus-2)) )
 	   );
     return Gamma_s;
@@ -48,7 +48,7 @@ class calculate_flux
   /**
    * This class evolves an astrophysical neutrino flux assuming scalar
    * neutrino self-interactions with the cosmic neutrino background.
-   * 
+   *
    * The injected flux is assumed to follow a power law spectrum with a
    * high-energy cutoff, and a redshift dependence given by the Star
    * Formation Rate (see arXiv:0804.4008).
@@ -67,7 +67,7 @@ class calculate_flux
    *                                      error
    *        get_energy(i): returns the [logarithmic] central energy of the bin i
    *        get_N_bins_E(): returns the number of energy bins
-   *        
+   *
    * As well as the public member variables:
    *        mphi  --- Mediator mass [eV]
    *        g     --- Yukawa coupling [eV]
@@ -75,13 +75,13 @@ class calculate_flux
    *        si    --- Spectral index
    *        norm  --- Normalization of the free-streaming flux at 100 TeV
    * that can be modified between different runs
-   * 
+   *
    * Authors: Ivan Esteban, Sujata Pandey
    */
 
 public:
   calculate_flux(): calculate_flux(1e7, 0.1, 0.1, 2, 1, true, false){} // We must declare a constructor without parameters for cython compatibility. For speed reasons, we set non_resonant to false. This will avoid loading the interpolating files
-  
+
   calculate_flux(double mphi_, double g_, double mntot_, double si_,
 		 double norm_ = 1,
 		 bool majorana_ = true, bool non_resonant_ = true, bool normal_ordering_ = true,
@@ -89,7 +89,7 @@ public:
 		 double zmax_ = 5.0, int flav_=2, bool phiphi_ = false):
     mphi(mphi_), g(g_), mntot(mntot_), si(si_),
     norm(norm_), majorana(majorana_), non_resonant(non_resonant_), normal_ordering(normal_ordering_),
-    N_bins_E(N_bins_E_), lEmin(lEmin_), lEmax(lEmax_), 
+    N_bins_E(N_bins_E_), lEmin(lEmin_), lEmax(lEmax_),
     flav(flav_), phiphi(phiphi_){
     /**
      * Constructor
@@ -120,7 +120,7 @@ public:
      *   flav            ---- Flavor of interacting neutrinos: 0=e, 1=mu, 2=tau. Default: 2
      *   phiphi          ---- Whether to include double scalar production (true) or not (false).
      *                        This requires having the cross-section tables. Default: true
-     * 
+     *
      */
     // Allocate memory based on the number of energy bins
     flux = new double *[3]; // Neutrino spectrum in mass space
@@ -129,7 +129,7 @@ public:
     flux_fla = new double *[3]; // Neutrino spectrum in flavor space
     for(int i=0; i<3; ++i)
       flux_fla[i] = new double[N_bins_E];
-       
+
     E_nu = new double[N_bins_E]; // Energy bin centers
     Emin = new double[N_bins_E]; // Smallest energy in each bin
     Emax = new double[N_bins_E]; // Largest energy in each bin
@@ -146,7 +146,7 @@ public:
      */
     N_steps_z = log((1+zmax_) / (1+0)) / log(Emax[0]/Emin[0]) + 2; // Number of redshift steps
     z = new double[N_steps_z]; // Redshift steps, ordered from z=0 to z=zmax
-    for(int i=0; i<N_steps_z; ++i) 
+    for(int i=0; i<N_steps_z; ++i)
       z[i] = (1+0) * pow(Emax[0]/Emin[0], i) - 1;
     zmax = z[N_steps_z - 1];
 
@@ -154,7 +154,7 @@ public:
     const mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
     /* Compute neutrino mixing*/
     double s12=sqrt(nu_par.central(mixing_params::ParName::SSQ_T12));
-    double c12=sqrt(1.0 - SQR(s12)); 
+    double c12=sqrt(1.0 - SQR(s12));
     double s13=sqrt(nu_par.central(mixing_params::ParName::SSQ_T13));
     double c13=sqrt(1.0 - SQR(s13));
     double s23=sqrt(nu_par.central(mixing_params::ParName::SSQ_T23));
@@ -178,7 +178,7 @@ public:
       spl_alphaTilde_phiphi = interp::spline_ND<2>({5000, 100}, "xsec/alphatilde_phiphi.bin", false, {true, false, false}, true);
       spl_alpha_phiphi = interp::spline_ND<3>({1000, 1000, 100}, "xsec/alpha_phiphi.bin", false, {true, false, false, false}, true);
     }
-    
+
   }
 
   /* Parameters that can be modified after an object has been created (see documentation in the constructor for their meaning) */
@@ -199,7 +199,7 @@ public:
         ? NU_FIT61_NOR.central(mixing_params::ParName::DEL_MSQ_31)
         : -1.0 * NU_FIT61_INV.central(mixing_params::ParName::DEL_MSQ_31)
     };
-    
+
     double mL = nuSIaux::getmL(mntot, dmq21, dmqAT);
     if(normal_ordering){
       mn[0] = mL;
@@ -238,7 +238,7 @@ public:
       }
       tbl_Gamma[i] = Gamma(Emin_i, Emax_i);
       tbl_alphaTilde[i] = alphaTilde(Emin_i, Emax_i);
-      
+
       tbl_alpha[i] = new double[N_bins_E + N_steps_z - 2];
       for(int m=i+1; m<N_bins_E + N_steps_z - 2; ++m){
 	double Emax_m, Emin_m;
@@ -253,7 +253,7 @@ public:
       }
     }
 
-    double alpha_wo_mixing[N_bins_E]; 
+    double alpha_wo_mixing[N_bins_E];
     double dlogz = log(1+z[1])-log(1+z[0]);
     for(int i=N_steps_z-1; i>0; --i)   // Loop for redshift, starting from z=zmax to z=0. We will obtain the solution of the evolution equations at z[i-1]
       {
@@ -263,7 +263,7 @@ public:
 	// If we are only considering resonant contributions, alpha \propto tminus-tplus.
 	// Thus, when we sum over alpha we are computing many times essentially the same quantity.
 	// To speed everything up, the variable alpha_cum keeps track of alpha
-	
+
 	for(int j=N_bins_E; j>0; --j){ // Loop over energies, starting from highest energies. Current energy bin = E_nu[j-1]
 	  double Gamma_wo_mixing = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_Gamma[j+i-2]; //Gamma(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]));
 	  double alphaTilde_wo_mixing = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_alphaTilde[j+i-2]; // alphaTilde(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]));
@@ -279,7 +279,7 @@ public:
 	  /* We fill the matrices representing the evolution equations */
 	  for(int k=0; k<3; ++k){
 	    double src = (1+z[i-1])*dlogz/H * Lum(z[i], Emin[j-1], Emax[j-1], k); // Source term
-	    
+
 	    if(!non_resonant && j!=N_bins_E)
 	      for(int l=0; l<3; ++l) // Loop over flavors
 		src += (1+z[i-1])*dlogz/H * alpha_cum[l] * std::norm(U[flav][k]) * std::norm(U[flav][l]) * (Emax[j-1]-Emin[j-1]);
@@ -287,7 +287,7 @@ public:
 	      for(int m=j; m<N_bins_E; ++m) // Loop over bins with energies er[m], with m>=j
 		for(int l=0; l<3; ++l) // Loop over flavors
 		  src += (1+z[i-1])*dlogz/H * flux[l][m] * alpha_wo_mixing[m] * std::norm(U[flav][k]) * std::norm(U[flav][l]) / (Emax[m] - Emin[m]);
-	    
+
 	    double Znr = flux[k][j-1] + src; // Numerator of the rhs of the evolution equation
 	    double Zdr = 1.0 + (1+z[i-1])*dlogz/H * (Gamma_wo_mixing * std::norm(U[flav][k]) - alphaTilde_wo_mixing * SQR(std::norm(U[flav][k]))) / (Emax[j-1] - Emin[j-1]); // Denominator of the rhs of the evolution equation
 
@@ -322,7 +322,7 @@ public:
     for(int i=0; i<N_bins_E + N_steps_z - 2; ++i)
       delete[] tbl_alpha[i];
     delete[] tbl_alpha;
-    
+
     // Divide by energy bin size
     for(int i=0; i<N_bins_E; ++i)
       for(int k=0; k<3; ++k)
@@ -342,14 +342,14 @@ public:
      */
 
     double E_FS = energy_FS();
-    
+
     evolve();
     double E_int = 0;
     // \int dE * E * flux(E) = \int d(logE) * E^2 * flux(E)
     for(int i=0; i<N_bins_E; ++i)
       for(int k=0; k<3; ++k)
 	E_int += (log(Emax[i]) - log(Emin[i])) * SQR(E_nu[i]) * flux[k][i];
-    
+
     return (E_int - E_FS) / E_FS;
   }
 
@@ -368,7 +368,7 @@ public:
       return 0;
     }
 
-    return flux[i][j];    
+    return flux[i][j];
   }
 
   inline double get_flux_fla(int i, int j){
@@ -386,7 +386,7 @@ public:
       return 0;
     }
 
-    return flux_fla[i][j];    
+    return flux_fla[i][j];
   }
 
   inline int get_N_bins_E(){
@@ -405,17 +405,17 @@ public:
       return 0;
     }
 
-    return E_nu[i];    
+    return E_nu[i];
   }
 
   /* Constructors and destructors that take proper care of the dynamic memory */
-  
+
   // Copy constructor
   calculate_flux(const calculate_flux &orig):
     mphi(orig.mphi), g(orig.g), mntot(orig.mntot), si(orig.si),
     norm(orig.norm),
     majorana(orig.majorana), non_resonant(orig.non_resonant), normal_ordering(orig.normal_ordering),
-    N_bins_E(orig.N_bins_E), N_steps_z(orig.N_steps_z), lEmin(orig.lEmin), lEmax(orig.lEmax), 
+    N_bins_E(orig.N_bins_E), N_steps_z(orig.N_steps_z), lEmin(orig.lEmin), lEmax(orig.lEmax),
     zmax(orig.zmax), flav(orig.flav), phiphi(orig.phiphi),
     spl_alpha_phiphi(orig.spl_alpha_phiphi), spl_alphaTilde_phiphi(orig.spl_alphaTilde_phiphi){
     // Properly take care of the memory in the arrays
@@ -463,19 +463,19 @@ public:
     phiphi = rhs.phiphi;
     spl_alpha_phiphi = rhs.spl_alpha_phiphi;
     spl_alphaTilde_phiphi = rhs.spl_alphaTilde_phiphi;
-    
+
     // Properly take care of the memory in the arrays
     for(int i=0; i<3; ++i)
       delete[] flux[i];
     delete[] flux;
     for(int i=0; i<3; ++i)
       delete[] flux_fla[i];
-    delete[] flux_fla;    
+    delete[] flux_fla;
     delete[] E_nu;
     delete[] Emin;
     delete[] Emax;
     delete[] z;
-    
+
     flux = new double *[3];
     for(int i=0; i<3; ++i)
       flux[i] = new double[N_bins_E];
@@ -510,7 +510,7 @@ public:
     delete[] flux;
     for(int i=0; i<3; ++i)
       delete[] flux_fla[i];
-    delete[] flux_fla;    
+    delete[] flux_fla;
     delete[] E_nu;
     delete[] Emin;
     delete[] Emax;
@@ -570,7 +570,7 @@ private:
      * Returns the Star Formation Rate at redshift z,
      * using the parametrization in
      * Yüksel, Kistler, Beacom & Hopkins, arXiv:0804.4008
-     * 
+     *
      * The normalization is arbitrary
      */
 
@@ -602,7 +602,7 @@ private:
 
     double res = 0;
     double z_min = 0, z_max = zmax;
-    
+
     for(int f=0 ; f<N_integ_z; f++){
       // Limits of the integral
       double a = z_min + f * (z_max - z_min) / N_integ_z;
@@ -619,7 +619,7 @@ private:
     }
     return res;
   }
-  
+
   double energy_FS(){
     /**
      * Returns the total energy for free streaming flux, propagating neutrinos from z=zmax to z=0
@@ -629,13 +629,13 @@ private:
      */
     return energy_FS(0, zmax);
   }
-    
+
   double energy_FS(double z_min, double z_max){
     /**
      * Returns the total energy for free streaming flux, propagating neutrinos from z_max to z_min
      * This is given by the integral of
      *    \int_zmin^zmax dz/H(z) \int_Emin^Emax dE E \sum_i L^i(z, E*(1+z))
-     * where L^i(z, E*(1+z)) is the source distribution function. 
+     * where L^i(z, E*(1+z)) is the source distribution function.
      */
 
     double res = 0;
@@ -665,7 +665,7 @@ private:
      */
 
     if (fabs(si-2)<1e-5) // Possible roundoff uncertainties: Taylor-expand
-      return norm_total * get_SFR(z) * pow(E0/(1+z), si) * (log(Ep/Em) + 
+      return norm_total * get_SFR(z) * pow(E0/(1+z), si) * (log(Ep/Em) +
 						    (2-si)/2.0 * (SQR(log(Ep)) - SQR(log(Em))));
     else
       return norm_total * get_SFR(z) * pow(E0/(1+z), si) * (pow(Ep, 2-si) - pow(Em, 2-si)) / (2-si);
@@ -682,7 +682,7 @@ private:
     else
       return SQR(g)*mphi/(8.0*M_PI);
   }
-  
+
   double Gamma(double Em, double Ep){
   /**
    * Returns
@@ -707,7 +707,7 @@ private:
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 \sum_{kl} |U_{flav k}|^2 |U_{flav l}|^2
       Gamma_s *= std::norm(U[flav][j]);
       tot += SQR(mphi) / (2*mn[j]) * Gamma_s;
-      
+
       if(!non_resonant)
 	continue;
 
@@ -724,7 +724,7 @@ private:
 	  z2 = (b-a)/2. * nuSIaux::x_integ[1] + (b+a)/2.,
 	  z3 = (b-a)/2. * nuSIaux::x_integ[2] + (b+a)/2.;
 	Gamma_t_u = SQR(SQR(g)) / (16*M_PI*SQR(mphi))*
-       	  (b-a)/2. * (nuSIaux::w_integ[0] * ((z1+2)/(z1*(z1+1)) - 2/SQR(z1)*log1p(z1)) + 
+       	  (b-a)/2. * (nuSIaux::w_integ[0] * ((z1+2)/(z1*(z1+1)) - 2/SQR(z1)*log1p(z1)) +
       		      nuSIaux::w_integ[1] * ((z2+2)/(z2*(z2+1)) - 2/SQR(z2)*log1p(z2)) +
 		      nuSIaux::w_integ[2] * ((z3+2)/(z3*(z3+1)) - 2/SQR(z3)*log1p(z3)));
       }
@@ -734,11 +734,11 @@ private:
       else
 	Gamma_t_u *= 2 * std::norm(U[flav][j]);
       tot += SQR(mphi) / (2*mn[j]) * Gamma_t_u;
-	
+
       /* t-u interference */
       double Gamma_tu = SQR(SQR(g)) / (32*M_PI*SQR(mphi)*sminus*splus) *
-	(sminus*log1p(splus)* (2 + 2*splus + splus*log(2 + splus)) - 
-	 splus*log1p(sminus)* (2 + 2*sminus + sminus*log(2 + sminus)) + 
+	(sminus*log1p(splus)* (2 + 2*splus + splus*log(2 + splus)) -
+	 splus*log1p(sminus)* (2 + 2*sminus + sminus*log(2 + sminus)) +
 	 sminus*splus*(nuSIaux::dilog1mdiff(splus, sminus) +
 		       nuSIaux::dilogdiff(splus, sminus)));
       if(Gamma_tu < 0){ // Roundoff errors! Compute the integral numerically
@@ -750,8 +750,8 @@ private:
 	  z2 = (b-a)/2. * nuSIaux::x_integ[1] + (b+a)/2.,
 	  z3 = (b-a)/2. * nuSIaux::x_integ[2] + (b+a)/2.;
 	Gamma_tu = SQR(SQR(g)) / (16*M_PI*SQR(mphi))*
-	  (b-a)/2. * (nuSIaux::w_integ[0] * (1/z1 - 2*(1+z1)/(SQR(z1)*(2+z1)) * log1p(z1)) + 
-		      nuSIaux::w_integ[1] * (1/z2 - 2*(1+z2)/(SQR(z2)*(2+z2)) * log1p(z2)) + 
+	  (b-a)/2. * (nuSIaux::w_integ[0] * (1/z1 - 2*(1+z1)/(SQR(z1)*(2+z1)) * log1p(z1)) +
+		      nuSIaux::w_integ[1] * (1/z2 - 2*(1+z2)/(SQR(z2)*(2+z2)) * log1p(z2)) +
 		      nuSIaux::w_integ[2] * (1/z3 - 2*(1+z3)/(SQR(z3)*(2+z3)) * log1p(z3)));
       }
       // Prefactor: (1/2) * |U_{flav i}|^2 |U_{flav j}|^2 \sum_{kl} |U_{flav k}|^2 |U_{flav l}|^2 . The 1/2 factor is for Dirac, that has half the amount of targets in the u-channel
@@ -773,11 +773,11 @@ private:
       double _Complex dilogdiff_z2;
 
       if (splus < 1e-5){ // We Taylor-expand dilogdiff to be fast and avoid roundoff errors
-	dilogdiff_z1 = SQR(sminus)*(-I/2/(I + ga_red) - clog((I + ga_red)/(2*I + ga_red))/2.) + 
-	  sminus*clog((I + ga_red)/(2*I + ga_red)) - splus*clog((I + ga_red)/(2*I + ga_red)) + 
+	dilogdiff_z1 = SQR(sminus)*(-I/2/(I + ga_red) - clog((I + ga_red)/(2*I + ga_red))/2.) +
+	  sminus*clog((I + ga_red)/(2*I + ga_red)) - splus*clog((I + ga_red)/(2*I + ga_red)) +
 	  (SQR(splus)*(I/(I + ga_red) + clog((I + ga_red)/(2*I + ga_red))))/2.;
-	dilogdiff_z2 = SQR(sminus)*(I/2/(-I + ga_red) - clog((-I + ga_red)/(-2*I + ga_red))/2.) + 
-	  sminus*clog((-I + ga_red)/(-2*I + ga_red)) - splus*clog((-I + ga_red)/(-2*I + ga_red)) + 
+	dilogdiff_z2 = SQR(sminus)*(I/2/(-I + ga_red) - clog((-I + ga_red)/(-2*I + ga_red))/2.) +
+	  sminus*clog((-I + ga_red)/(-2*I + ga_red)) - splus*clog((-I + ga_red)/(-2*I + ga_red)) +
 	  (SQR(splus)*(-I/(-I + ga_red) + clog((-I + ga_red)/(-2*I + ga_red))))/2.;
       }
       else{
@@ -809,20 +809,20 @@ private:
       double Gamma_pp = 0;
       if((splus > 4) && phiphi){
 	if(sminus > 4)
-	  Gamma_pp = SQR(SQR(g)) / (128.*M_PI*SQR(mphi)) * (12*sqrt((-4 + sminus)/sminus) - 12*sqrt((-4 + splus)/splus) - 2*log(SQR(sqrt(-4 + sminus) - sqrt(sminus))/4.)*log(SQR(-2 + sminus + sqrt((-4 + sminus)*sminus))/4.) - 
-						  ((6 + sminus*log((-2 + sminus)*sminus))*log(SQR(-2 + sminus + sqrt((-4 + sminus)*sminus))/SQR(2 - sminus + sqrt((-4 + sminus)*sminus))))/sminus - 
-						  24*(sqrt((-4 + sminus)/sminus) - sqrt((-4 + splus)/splus) - log(sqrt(-4 + sminus) + sqrt(sminus)) + log(sqrt(-4 + splus) + sqrt(splus))) + 
-						  2*log(SQR(sqrt(-4 + splus) - sqrt(splus))/4.)*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/4.) + 
+	  Gamma_pp = SQR(SQR(g)) / (128.*M_PI*SQR(mphi)) * (12*sqrt((-4 + sminus)/sminus) - 12*sqrt((-4 + splus)/splus) - 2*log(SQR(sqrt(-4 + sminus) - sqrt(sminus))/4.)*log(SQR(-2 + sminus + sqrt((-4 + sminus)*sminus))/4.) -
+						  ((6 + sminus*log((-2 + sminus)*sminus))*log(SQR(-2 + sminus + sqrt((-4 + sminus)*sminus))/SQR(2 - sminus + sqrt((-4 + sminus)*sminus))))/sminus -
+						  24*(sqrt((-4 + sminus)/sminus) - sqrt((-4 + splus)/splus) - log(sqrt(-4 + sminus) + sqrt(sminus)) + log(sqrt(-4 + splus) + sqrt(splus))) +
+						  2*log(SQR(sqrt(-4 + splus) - sqrt(splus))/4.)*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/4.) +
 						  ((6 + splus*log((-2 + splus)*splus))*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/SQR(2 - splus + sqrt((-4 + splus)*splus))))/splus +
-						  8 * nuSIaux::dilogdiff(4/SQR(sqrt(-4 + sminus) + sqrt(sminus)), 4/SQR(sqrt(-4 + splus) + sqrt(splus))) + 
+						  8 * nuSIaux::dilogdiff(4/SQR(sqrt(-4 + sminus) + sqrt(sminus)), 4/SQR(sqrt(-4 + splus) + sqrt(splus))) +
 						  2 * nuSIaux::dilogdiff(4/SQR(-2 + sminus + sqrt((-4 + sminus)*sminus)), 4/SQR(-2 + splus + sqrt((-4 + splus)*splus))));
 	else
-	  Gamma_pp = SQR(SQR(g)) / (128.*M_PI*SQR(mphi)) * (12*sqrt((-4 + 4)/4) - 12*sqrt((-4 + splus)/splus) - 2*log(SQR(sqrt(-4 + 4) - sqrt(4))/4.)*log(SQR(-2 + 4 + sqrt((-4 + 4)*4))/4.) - 
-						  ((6 + 4*log((-2 + 4)*4))*log(SQR(-2 + 4 + sqrt((-4 + 4)*4))/SQR(2 - 4 + sqrt((-4 + 4)*4))))/4 - 
-						  24*(sqrt((-4 + 4)/4) - sqrt((-4 + splus)/splus) - log(sqrt(-4 + 4) + sqrt(4)) + log(sqrt(-4 + splus) + sqrt(splus))) + 
-						  2*log(SQR(sqrt(-4 + splus) - sqrt(splus))/4.)*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/4.) + 
+	  Gamma_pp = SQR(SQR(g)) / (128.*M_PI*SQR(mphi)) * (12*sqrt((-4 + 4)/4) - 12*sqrt((-4 + splus)/splus) - 2*log(SQR(sqrt(-4 + 4) - sqrt(4))/4.)*log(SQR(-2 + 4 + sqrt((-4 + 4)*4))/4.) -
+						  ((6 + 4*log((-2 + 4)*4))*log(SQR(-2 + 4 + sqrt((-4 + 4)*4))/SQR(2 - 4 + sqrt((-4 + 4)*4))))/4 -
+						  24*(sqrt((-4 + 4)/4) - sqrt((-4 + splus)/splus) - log(sqrt(-4 + 4) + sqrt(4)) + log(sqrt(-4 + splus) + sqrt(splus))) +
+						  2*log(SQR(sqrt(-4 + splus) - sqrt(splus))/4.)*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/4.) +
 						  ((6 + splus*log((-2 + splus)*splus))*log(SQR(-2 + splus + sqrt((-4 + splus)*splus))/SQR(2 - splus + sqrt((-4 + splus)*splus))))/splus +
-						  8 * nuSIaux::dilogdiff(4/SQR(sqrt(-4 + 4) + sqrt(4)), 4/SQR(sqrt(-4 + splus) + sqrt(splus))) + 
+						  8 * nuSIaux::dilogdiff(4/SQR(sqrt(-4 + 4) + sqrt(4)), 4/SQR(sqrt(-4 + splus) + sqrt(splus))) +
 						  2 * nuSIaux::dilogdiff(4/SQR(-2 + 4 + sqrt((-4 + 4)*4)), 4/SQR(-2 + splus + sqrt((-4 + splus)*splus))));
 
 	if(Gamma_pp < 0){ // Roundoff errors! Compute the integral numerically
@@ -836,7 +836,7 @@ private:
 
 	  Gamma_pp = SQR(SQR(g)) / (64*M_PI*SQR(mphi))*
 	    (b-a)/2. * (nuSIaux::w_integ[0] * ((SQR(z1)-4*z1+6)/(SQR(z1)*(z1-2))*log(SQR((sqrt(z1*(z1-4)) + z1 - 2) / (sqrt(z1*(z1-4)) - z1 + 2)))
-				      - 6*sqrt(z1*(z1-4))/SQR(z1)) + 
+				      - 6*sqrt(z1*(z1-4))/SQR(z1)) +
 			nuSIaux::w_integ[1] * ((SQR(z2)-4*z2+6)/(SQR(z2)*(z2-2))*log(SQR((sqrt(z2*(z2-4)) + z2 - 2) / (sqrt(z2*(z2-4)) - z2 + 2)))
 				      - 6*sqrt(z2*(z2-4))/SQR(z2)) +
 			nuSIaux::w_integ[2] * ((SQR(z3)-4*z3+6)/(SQR(z3)*(z3-2))*log(SQR((sqrt(z3*(z3-4)) + z3 - 2) / (sqrt(z3*(z3-4)) - z3 + 2)))
@@ -848,8 +848,8 @@ private:
 	  Gamma_pp *= 2;
       }
       tot += SQR(mphi) / (2*mn[j]) * Gamma_pp;
-      
-	
+
+
       if(Gamma_s < 0 || Gamma_t_u < 0 || Gamma_tu < 0 || (Gamma_s + Gamma_t_u + Gamma_st + Gamma_su) < 0) {
 	std::cerr<<"Negative cross section when computing Gamma; for sminus/mphi^2 = "
 		 <<sminus<<", splus/mphi^2 = "<<splus<<". The values of Gamma are as follows:"<<std::endl;
@@ -859,9 +859,9 @@ private:
 	std::cerr<<"Gamma_s + Gamma_t_u + Gamma_st + Gamma_su = "<<Gamma_s + Gamma_t_u + Gamma_st + Gamma_su<<std::endl;
 	std::cerr<<"Possible roundoff errors for g="<<g<<", mphi="<<mphi<<", mntot="<<mntot<<std::endl;
       }
-      
+
     }
-    
+
     return tot;
   }
 
@@ -873,7 +873,7 @@ private:
      *                                             / |U_{flav i}|^2 |U_{flav j}|^2
      * where
      *  sigma is the regeneration cross section for the process j k -> i l
-     *  
+     *
      * If the final state particles are identical, there is double counting even for i != l,
      * because for final states C & D we have
      *   D=i [E_D=E], \sum_l C=l [E_C=Etilde-E]
@@ -894,22 +894,22 @@ private:
       // If, because of a numerical coincidence, tminus==-1, shift it to avoid dividing exactly by zero
       if(fabs(tplus+1)<1e-7)
 	tplus += tplus*1e-6;
-    
+
       /* s-channel */
       double alphaTilde_s;
       if (fabs(tplus) < 1e-5) // We Taylor-expand atandiff to avoid roundoff errors
 	alphaTilde_s = SQR(SQR(g)) / (16*M_PI*Ga*SQR(SQR(mphi))) *
 	  (2*mphi * (1+tminus) * (-((Ga/mphi*(1 + SQR(Ga/mphi) - 2*tminus)*(-tminus + tplus))/
-				    SQR(1 + SQR(Ga/mphi))) + 
+				    SQR(1 + SQR(Ga/mphi))) +
 				  (Ga/mphi*SQR(-tminus + tplus))/SQR(1 + SQR(Ga/mphi)))
-	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tplus * (tplus+2))  - 
+	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tplus * (tplus+2))  -
 		   log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tminus * (tminus+2)) )
 	   );
       else
 	alphaTilde_s = SQR(SQR(g)) / (16*M_PI*Ga*SQR(SQR(mphi))) *
 	  (2*mphi * (1+tminus) * nuSIaux::atandiff(mphi*(1+tminus) / Ga,
 						   mphi*(1+tplus) / Ga)
-	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tplus * (tplus+2))  - 
+	   + Ga * (log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tplus * (tplus+2))  -
 		   log1p(SQR(mphi) / (SQR(mphi) + SQR(Ga)) * tminus * (tminus+2)) )
 	   );
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 |U_{flav k}|^2 \sum_{l} |U_{flav l}|^2
@@ -929,7 +929,7 @@ private:
 	   ((-2 + tminus)*(tminus - tplus) -
 	    (-1 + tminus)*(-2 + tplus)*(log1p(-tminus) - log1p(-tplus)))
 	   +
-	   1/(16*SQR(SQR(mphi))*M_PI*SQR(1 + tminus)*tplus) * 
+	   1/(16*SQR(SQR(mphi))*M_PI*SQR(1 + tminus)*tplus) *
 	   ((1 + tminus)*(2 + tminus)*(tminus - tplus)
 	    + (-2*SQR(1 + tminus) + tplus + 2*tminus*tplus)*log1p(tminus - tplus)
 	    - SQR(tminus)*tplus*log(tminus/tplus))
@@ -978,7 +978,7 @@ private:
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 |U_{flav k}|^2 \sum_{l} |U_{flav l}|^2
       alphaTilde_t *= std::norm(U[flav][k]);
       tot += SQR(SQR(mphi)) / (2*mn[k]) * alphaTilde_t;
-      
+
       /* u-channel */
       double alphaTilde_u;
       if(majorana)
@@ -1015,30 +1015,30 @@ private:
 	double dilog_combi;
 	if(-tplus < 1e-2 && -tminus < 1e-2){
 	  double delta = tplus/tminus;
-	  dilog_combi = -(((-1 + delta)*tplus*log(-2*tplus))/delta) - ((-1 + delta)*SQR(tplus)*(-2 + delta + delta*log(2) + log(-2/tplus) - delta*log(-tplus)))/(2.*SQR(delta)) + 
+	  dilog_combi = -(((-1 + delta)*tplus*log(-2*tplus))/delta) - ((-1 + delta)*SQR(tplus)*(-2 + delta + delta*log(2) + log(-2/tplus) - delta*log(-tplus)))/(2.*SQR(delta)) +
 	    (CUB(tplus)*(8 - 30*delta + 21*SQR(delta) + CUB(delta) - 8*CUB(delta)*log(2) + log(256) + 8*log(-tplus) - 8*CUB(delta)*log(-tplus)))/
-	    (24.*CUB(delta)) + (SQR(SQR(tplus))*(-32 + 56*delta - 51*SQR(delta) + 30*CUB(delta) - 3*SQR(SQR(delta)) + log(4096) - SQR(SQR(delta))*log(4096) - 
+	    (24.*CUB(delta)) + (SQR(SQR(tplus))*(-32 + 56*delta - 51*SQR(delta) + 30*CUB(delta) - 3*SQR(SQR(delta)) + log(4096) - SQR(SQR(delta))*log(4096) -
 						 12*log(-tplus) + 12*SQR(SQR(delta))*log(-tplus)))/(48.*SQR(SQR(delta)));
 	} else if(-tplus > 1e2 && -tminus > 1e2){
 	  double delta = tplus/tminus;
-	  dilog_combi = (-2*(-1 + delta)*log((-1 + delta)/delta))/tplus - (2*(-1 + log(-(delta/((-1 + delta)*tplus)))))/SQR(tplus) + 
-	    (-6 + 4*delta + SQR(delta) - 2*CUB(delta) - 8*log((-1 + delta)/delta) + 8*delta*log((-1 + delta)/delta) + 2*CUB(delta)*log((-1 + delta)/delta) - 
-	     2*SQR(SQR(delta))*log((-1 + delta)/delta) - 6*log(-tplus) + 6*delta*log(-tplus))/(3.*(-1 + delta)*CUB(tplus)) + 
-	    (8 - 12*delta + 3*SQR(delta) + 12*log((-1 + delta)/delta) - 24*delta*log((-1 + delta)/delta) + 12*SQR(delta)*log((-1 + delta)/delta) + 12*log(-tplus) - 
+	  dilog_combi = (-2*(-1 + delta)*log((-1 + delta)/delta))/tplus - (2*(-1 + log(-(delta/((-1 + delta)*tplus)))))/SQR(tplus) +
+	    (-6 + 4*delta + SQR(delta) - 2*CUB(delta) - 8*log((-1 + delta)/delta) + 8*delta*log((-1 + delta)/delta) + 2*CUB(delta)*log((-1 + delta)/delta) -
+	     2*SQR(SQR(delta))*log((-1 + delta)/delta) - 6*log(-tplus) + 6*delta*log(-tplus))/(3.*(-1 + delta)*CUB(tplus)) +
+	    (8 - 12*delta + 3*SQR(delta) + 12*log((-1 + delta)/delta) - 24*delta*log((-1 + delta)/delta) + 12*SQR(delta)*log((-1 + delta)/delta) + 12*log(-tplus) -
 	     24*delta*log(-tplus) + 12*SQR(delta)*log(-tplus))/(3.*SQR(-1 + delta)*SQR(SQR(tplus)));
 	} else
 	  dilog_combi = gsl_sf_dilog(1 + 1/(-2 + tplus)) - gsl_sf_dilog((-1 + tminus)/(-2 + tplus))
 	    + gsl_sf_dilog(1+(1+tminus-tplus)/tplus) - gsl_sf_dilog(1 + 1/tplus);
 
 	alphaTilde_tu = SQR(SQR(g)) /(32*M_PI*SQR(SQR(mphi))*(1 + tminus)*tplus) *
-	  (2*(2*(1 + tminus)*(tminus - tplus) - 2*(1 + tminus)*tplus*atanh(1/(1 - tplus))*atanh((tminus - tplus)/(-2 + tminus + tplus)) + 
-	      tminus*tplus*(-log1p(-tminus) + log1p(-tplus)) + (1 + tminus)*(log1p(-tminus) - log1p(-tplus) - log1p(tminus - tplus)) + 
-	      tplus*(-log1p(-tminus) + log1p(-tplus) + log1p(tminus - tplus)) - tminus*tplus*log(tminus/tplus)) + 
-      	   (1 + tminus)*tplus*((-SQR(log1p(-tminus)) + SQR(log1p(-tplus)))/2. + nuSIaux::dilog1over1mdiff(tplus, tminus)) - 
+	  (2*(2*(1 + tminus)*(tminus - tplus) - 2*(1 + tminus)*tplus*atanh(1/(1 - tplus))*atanh((tminus - tplus)/(-2 + tminus + tplus)) +
+	      tminus*tplus*(-log1p(-tminus) + log1p(-tplus)) + (1 + tminus)*(log1p(-tminus) - log1p(-tplus) - log1p(tminus - tplus)) +
+	      tplus*(-log1p(-tminus) + log1p(-tplus) + log1p(tminus - tplus)) - tminus*tplus*log(tminus/tplus)) +
+      	   (1 + tminus)*tplus*((-SQR(log1p(-tminus)) + SQR(log1p(-tplus)))/2. + nuSIaux::dilog1over1mdiff(tplus, tminus)) -
 	   (1 + tminus)*tplus*(nuSIaux::dilog1pdiff(tminus, tplus)
 			       + dilog_combi
 			       ));
-	
+
 	if(alphaTilde_tu < 0){ // Roundoff errors! Compute the integral numerically
 	  double a_y = tplus, b_y = tminus, a_x[3], b_x[3];
 	  // Nodes at which the integrand will be evaluated
@@ -1056,7 +1056,7 @@ private:
 	  }
 	  alphaTilde_tu *= SQR(SQR(g))/(16*M_PI * SQR(SQR(mphi)));
 	}
-	
+
       } else
 	alphaTilde_tu = 0;
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 |U_{flav k}|^2 \sum_{l} |U_{flav l}|^2
@@ -1084,15 +1084,15 @@ private:
 	double delta = tplus/tminus;
 	dilogdiff_z7z8 = tminus*(-1 + clog(tminus)) + (SQR(tminus)*(-1 + 2*clog(tminus)))/4. -
 	  (tplus*(-1 + clog(tplus)) + (SQR(tplus)*(-1 + 2*clog(tplus)))/4.);
-	dilogdiff_z5z1 = (-tminus + tplus)*clog(1 - I/(2*I + ga_red)) + 
-	  ((-SQR(tminus) + SQR(tplus))*(I*(1 + clog(1 - I/(2*I + ga_red))) + 
+	dilogdiff_z5z1 = (-tminus + tplus)*clog(1 - I/(2*I + ga_red)) +
+	  ((-SQR(tminus) + SQR(tplus))*(I*(1 + clog(1 - I/(2*I + ga_red))) +
 					clog(1 - I/(2*I + ga_red))*ga_red))/(2.*(I + ga_red));
-	dilogdiff_z2z6 = (tplus*(-1 + delta - clog(delta) + clog(tplus) - delta*clog(tplus)))/delta + 
-	  (SQR(tplus)*(-1 + SQR(delta) + 2*clog(delta) - 2*clog(tplus) + 4*delta*clog(tplus) - 2*SQR(delta)*clog(tplus)))/(4.*SQR(delta)) + 
-	  (CUB(tplus)*(7 - 9*delta + 2*CUB(delta) - 6*clog(delta) + 6*clog(tplus) - 18*delta*clog(tplus) + 18*SQR(delta)*clog(tplus) - 
+	dilogdiff_z2z6 = (tplus*(-1 + delta - clog(delta) + clog(tplus) - delta*clog(tplus)))/delta +
+	  (SQR(tplus)*(-1 + SQR(delta) + 2*clog(delta) - 2*clog(tplus) + 4*delta*clog(tplus) - 2*SQR(delta)*clog(tplus)))/(4.*SQR(delta)) +
+	  (CUB(tplus)*(7 - 9*delta + 2*CUB(delta) - 6*clog(delta) + 6*clog(tplus) - 18*delta*clog(tplus) + 18*SQR(delta)*clog(tplus) -
 		       6*CUB(delta)*clog(tplus)))/(18.*CUB(delta));
-	dilogdiff_z4z3 = ((-1 + delta)*tplus*clog((I + ga_red)/(2*I + ga_red)))/delta + 
-	  ((-1 + delta)*SQR(tplus)*(I*((1 + delta)/(I + ga_red) - 2/(2*I + ga_red)) + 
+	dilogdiff_z4z3 = ((-1 + delta)*tplus*clog((I + ga_red)/(2*I + ga_red)))/delta +
+	  ((-1 + delta)*SQR(tplus)*(I*((1 + delta)/(I + ga_red) - 2/(2*I + ga_red)) +
 				    (-1 + delta)*clog((I + ga_red)/(2*I + ga_red))))/(2.*SQR(delta));
       } else{
 	dilogdiff_z7z8 = nuSIaux::dilogdiff_complex(z7, z8);
@@ -1100,7 +1100,7 @@ private:
 	dilogdiff_z2z6 = nuSIaux::dilogdiff_complex(z2, z6);
 	dilogdiff_z4z3 = nuSIaux::dilogdiff_complex(z4, z3);
       }
-    
+
       double alphaTilde_st;
       if(majorana)
 	alphaTilde_st = SQR(SQR(g)) / (32*M_PI*(1 + SQR(ga_red))*SQR(SQR(mphi))) *
@@ -1115,8 +1115,8 @@ private:
 	   + log(SQR(ga_red) + SQR(2 + tminus))*log1p(tminus - tplus)
 	   - 2*log1p(-tminus)*log(-tplus) - 2*ga_red*M_PI*(log(SQR(tplus)) + log1p(tminus-tplus))
 	   + 2*ga_red*M_PI*log(SQR(tplus))
-	   + 4*tminus*log(tminus/tplus) 
-	   + (-log1p(-tplus) + log1p(-tminus) - log1p(tminus-tplus))*(log1p(SQR(1 + tplus)/SQR(ga_red)) + 2*log(ga_red)) 
+	   + 4*tminus*log(tminus/tplus)
+	   + (-log1p(-tplus) + log1p(-tminus) - log1p(tminus-tplus))*(log1p(SQR(1 + tplus)/SQR(ga_red)) + 2*log(ga_red))
 	   - log1p(tminus - tplus)*log1p(SQR(tminus) + 2*tminus)
 	   + 2*(SQR(ga_red) + tminus)*(log1p(SQR(1+tplus)/SQR(ga_red)) - log1p(SQR(1+tminus)/SQR(ga_red)))
 	   + 2*(log(-tplus)*(log1p(-tplus) + log1p(tminus - tplus)) + (log1p(SQR(1+tplus)/SQR(ga_red)) - log1p(SQR(1+tminus)/SQR(ga_red))) )
@@ -1153,17 +1153,17 @@ private:
 	  alphaTilde_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * spl_alphaTilde_phiphi.f_eval({-tplus, log10(tplus/tminus)});
 	else{ // Use a Taylor expansion for the non interpolated region
 	  alphaTilde_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * (6*tminus*log(-tminus) - tplus*SQR(log(-tminus))
-							  + 2*(-8*tminus + 8*tplus + 4*tplus*log(-tminus) + log(tminus - tplus)*(tminus - tplus - tplus*log(tminus/tplus))) - 
-							  2*(2*tminus + 5*tplus)*log(-tplus) + tplus*SQR(log(-tplus)) - 2*tplus*gsl_sf_dilog(1 - tminus/tplus))/(128.*M_PI*tplus);	  
+							  + 2*(-8*tminus + 8*tplus + 4*tplus*log(-tminus) + log(tminus - tplus)*(tminus - tplus - tplus*log(tminus/tplus))) -
+							  2*(2*tminus + 5*tplus)*log(-tplus) + tplus*SQR(log(-tplus)) - 2*tplus*gsl_sf_dilog(1 - tminus/tplus))/(128.*M_PI*tplus);
 	}
-	
+
 	alphaTilde_pp *= std::norm(U[flav][k]);
 	if(majorana) // For Majorana fermions, we can scatter off neutrinos and off antineutrinos
 	  alphaTilde_pp *= 2;
 
 	alphaTilde_pp *= 2; // Each scattering generates at least 2 neutrinos
 	if(majorana) // For Majorana fermions, all final states are observable
-	  alphaTilde_pp *= 2; 
+	  alphaTilde_pp *= 2;
       }
       tot += SQR(SQR(mphi)) / (2*mn[k]) * alphaTilde_pp;
 
@@ -1173,7 +1173,7 @@ private:
 	    To remove them, a dedicated Taylor expansion would be necessary. Thus, we will ignore them as long as they are numerically irrelevant
 	    I.e., we'll impose that the cross section is positive **within a reasonable numerical precision**
 	 */
-	 || (alphaTilde_st + alphaTilde_t + alphaTilde_s) / SQR(SQR(g/mphi)) < -1e-11 
+	 || (alphaTilde_st + alphaTilde_t + alphaTilde_s) / SQR(SQR(g/mphi)) < -1e-11
 	 || (alphaTilde_su + alphaTilde_u + alphaTilde_s) / SQR(SQR(g/mphi)) < -1e-11
 	 ){
 	std::cerr<<"Negative cross section when computing alphaTilde; for tminus/mphi^2 = "
@@ -1220,12 +1220,12 @@ private:
       double alpha_s;
       if (splus_prime < 1e-5) // We Taylor-expand atandiff to avoid roundoff errors
 	alpha_s = SQR(SQR(g)) / (8*M_PI*Ga*CUB(mphi))
-	  * (tminus - tplus) 
+	  * (tminus - tplus)
 	  * ( (Ga/mphi*(1 + SQR(Ga/mphi) + 2*sminus_prime))/SQR(1+SQR(Ga/mphi)) * (splus_prime-sminus_prime)
 	      +(Ga/mphi)/SQR(1+SQR(Ga/mphi)) * SQR(splus_prime-sminus_prime) );
       else
 	alpha_s = SQR(SQR(g)) / (8*M_PI*Ga*CUB(mphi))
-	  * (tminus - tplus) 
+	  * (tminus - tplus)
 	  * nuSIaux::atandiff( mphi*(splus_prime - 1) / Ga,
 			       mphi*(sminus_prime - 1) / Ga);
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 |U_{flav k}|^2 \sum_{l} |U_{flav l}|^2
@@ -1241,22 +1241,22 @@ private:
       /* t-channel */
       double alpha_t;
       if (majorana){
-	alpha_t = SQR(SQR(g)) / (sminus_prime*splus_prime*16*M_PI*SQR(SQR(mphi))) * (-((sminus_prime - splus_prime)*(3 + 2*tminus*(-1 + tplus) - 2*tplus)*(tminus - tplus))/((-1 + tminus)*(-1 + tplus)) + 
-										     2*(sminus_prime*splus_prime*(-tminus + tplus)*log(sminus_prime) + sminus_prime*splus_prime*(tminus - tplus)*log(splus_prime) - sminus_prime*splus_prime*log1p(sminus_prime + tminus) - 
-											sminus_prime*splus_prime*tplus*log1p(sminus_prime + tminus) + sminus_prime*splus_prime*log1p(splus_prime + tminus) + sminus_prime*splus_prime*tplus*log1p(splus_prime + tminus) - 
-											splus_prime*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) - 
-											splus_prime*tminus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) - 
-											splus_prime*tplus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) - 
-											splus_prime*tminus*tplus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) + sminus_prime*splus_prime*log(1 + sminus_prime + tplus) + 
-											sminus_prime*splus_prime*tminus*log1p(sminus_prime + tplus) + sminus_prime*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) + 
-											sminus_prime*tminus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) + 
-											sminus_prime*tplus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) + 
-											sminus_prime*tminus*tplus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) - sminus_prime*splus_prime*log(1 + splus_prime + tplus) - 
-											sminus_prime*splus_prime*tminus*log1p(splus_prime + tplus))/((1 + tminus)*(1 + tplus)) - 
-										     ((sminus_prime*splus_prime*log((sminus_prime*(1 + splus_prime + tminus))/(splus_prime*(1 + sminus_prime + tminus))))/SQR(1 + tminus) + 
+	alpha_t = SQR(SQR(g)) / (sminus_prime*splus_prime*16*M_PI*SQR(SQR(mphi))) * (-((sminus_prime - splus_prime)*(3 + 2*tminus*(-1 + tplus) - 2*tplus)*(tminus - tplus))/((-1 + tminus)*(-1 + tplus)) +
+										     2*(sminus_prime*splus_prime*(-tminus + tplus)*log(sminus_prime) + sminus_prime*splus_prime*(tminus - tplus)*log(splus_prime) - sminus_prime*splus_prime*log1p(sminus_prime + tminus) -
+											sminus_prime*splus_prime*tplus*log1p(sminus_prime + tminus) + sminus_prime*splus_prime*log1p(splus_prime + tminus) + sminus_prime*splus_prime*tplus*log1p(splus_prime + tminus) -
+											splus_prime*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) -
+											splus_prime*tminus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) -
+											splus_prime*tplus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) -
+											splus_prime*tminus*tplus*log(((1 + sminus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + sminus_prime + tplus))) + sminus_prime*splus_prime*log(1 + sminus_prime + tplus) +
+											sminus_prime*splus_prime*tminus*log1p(sminus_prime + tplus) + sminus_prime*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) +
+											sminus_prime*tminus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) +
+											sminus_prime*tplus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) +
+											sminus_prime*tminus*tplus*log(((1 + splus_prime + tminus)*(-1 + tplus))/((-1 + tminus)*(1 + splus_prime + tplus))) - sminus_prime*splus_prime*log(1 + splus_prime + tplus) -
+											sminus_prime*splus_prime*tminus*log1p(splus_prime + tplus))/((1 + tminus)*(1 + tplus)) -
+										     ((sminus_prime*splus_prime*log((sminus_prime*(1 + splus_prime + tminus))/(splus_prime*(1 + sminus_prime + tminus))))/SQR(1 + tminus) +
 										      (((sminus_prime - splus_prime)*(tminus - tplus)*(1 + tplus))/(1 + tminus) - sminus_prime*splus_prime*log((sminus_prime*(1 + splus_prime + tplus))/(splus_prime*(1 + sminus_prime + tplus))))/
 										      SQR(1 + tplus)));
-	
+
 	if(alpha_t < 0){ // Roundoff errors! Compute the integral numerically
 	  double a_y = tplus, b_y = tminus, a_x = sminus_prime, b_x = splus_prime;
 	  // Nodes at which the integrand will be evaluated
@@ -1271,7 +1271,7 @@ private:
 	      alpha_t += nuSIaux::w_integ[i] * nuSIaux::w_integ[j] * F[i][j];
 	    }
 	  alpha_t *= 1./4. * (b_y - a_y) * (b_x - a_x);
-	
+
 	  alpha_t *= SQR(SQR(g))/(16*M_PI * SQR(SQR(mphi)));
 	}
 
@@ -1294,7 +1294,7 @@ private:
 	      alpha_t += nuSIaux::w_integ[i] * nuSIaux::w_integ[j] * F[i][j];
 	    }
 	  alpha_t *= 1./4. * (b_y - a_y) * (b_x - a_x);
-	
+
 	  alpha_t *= 3./2. * SQR(SQR(g))/(32*M_PI * SQR(SQR(mphi)));
 	}
 
@@ -1312,7 +1312,7 @@ private:
 	alpha_u = 1./2. * SQR(SQR(g)) /(32*M_PI*SQR(SQR(mphi))*sminus_prime*splus_prime*(-1 + tminus)*(-1 + tplus)) *
 	  (sminus_prime - splus_prime)*(-((tminus - tplus)*(2 + tminus*(-1 + tplus) - tplus))
 					- 2*(-1 + tminus)*(-1 + tplus)*(log1p(-tminus) - log1p(-tplus)));
-	
+
 	if(alpha_u < 0){ // Roundoff errors! Compute the integral numerically
 	  double a_y = tplus, b_y = tminus, a_x = sminus_prime, b_x = splus_prime;
 	  // Nodes at which the integrand will be evaluated
@@ -1326,10 +1326,10 @@ private:
 	      alpha_u += nuSIaux::w_integ[i] * nuSIaux::w_integ[j] * F[i][j];
 	    }
 	  alpha_u *= 1./4. * (b_y - a_y) * (b_x - a_x);
-	
+
 	  alpha_u *= 1./2. * SQR(SQR(g))/(32*M_PI * SQR(SQR(mphi)));
 	}
-	
+
 	// Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 |U_{flav k}|^2 \sum_{l} |U_{flav l}|^2
 	alpha_u *= std::norm(U[flav][k]);
       }
@@ -1354,19 +1354,19 @@ private:
 
 	double log1p_abs_tplus = (tplus > -1)? log1p(tplus) : log(-1-tplus); // log|1+tplus|
 	double log1p_abs_tminus = (tminus > -1)? log1p(tminus) : log(-1-tminus); // log|1+tminus|
-      
-	alpha_tu = SQR(SQR(g)) / (32*M_PI*SQR(SQR(mphi))*sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)) * 
+
+	alpha_tu = SQR(SQR(g)) / (32*M_PI*SQR(SQR(mphi))*sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)) *
 	  (-4*(sminus_prime - splus_prime)*(1 + tminus)*(tminus - tplus)*(1 + tplus) +
-	   2*sminus_prime*splus_prime*tplus*(log(sminus_prime/splus_prime) - log1p(sminus_prime + tminus) + log1p(splus_prime + tminus)) + 
+	   2*sminus_prime*splus_prime*tplus*(log(sminus_prime/splus_prime) - log1p(sminus_prime + tminus) + log1p(splus_prime + tminus)) +
 	   2*splus_prime*(1 + tminus)*(1 + tplus)*(log1p(-tminus) - log1p(sminus_prime + tminus) - log1p(-tplus) + log1p(sminus_prime + tplus)) -
 	   2*sminus_prime*(1 + tminus)*(1 + tplus)*(log1p(-tminus) - log1p(splus_prime + tminus) - log1p(-tplus) + log1p(splus_prime + tplus)) +
 	   2*sminus_prime*splus_prime*(-log1p(sminus_prime + tminus) + log1p(splus_prime + tminus) + log1p(sminus_prime + tplus) - log1p(splus_prime + tplus)) +
-	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*(log((2 + sminus_prime)/sminus_prime)*(log(splus_prime) + log1p(sminus_prime + tplus)) - log((2 + splus_prime)/splus_prime)*(log(sminus_prime) + log1p(splus_prime + tplus)) + 
-							      log1p(-tplus)*(log(sminus_prime/splus_prime) - log1p(sminus_prime + tplus) + log1p(splus_prime + tplus))) + 
-	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*((log(splus_prime) + log1p(sminus_prime + tminus))*(log(sminus_prime/(2 + sminus_prime)) + log1p(-tminus) - log1p_abs_tminus) + 
-							      (log(sminus_prime) + log1p(splus_prime + tminus))*(log((2 + splus_prime)/splus_prime) - log1p(-tminus) + log1p_abs_tminus)) + 
-	   sminus_prime*splus_prime*(log(splus_prime/sminus_prime) + log1p(sminus_prime + tplus) - log1p(splus_prime + tplus))*(2*tminus + (1 + tminus)*(1 + tplus)*log1p_abs_tplus) + 
-	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*(gsl_sf_dilog((1 + sminus_prime + tminus)/(2 + sminus_prime)) - gsl_sf_dilog((1 + splus_prime + tminus)/(2 + splus_prime)) - gsl_sf_dilog((1 + sminus_prime + tplus)/(2 + sminus_prime)) + gsl_sf_dilog((1 + splus_prime + tplus)/(2 + splus_prime))) + 
+	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*(log((2 + sminus_prime)/sminus_prime)*(log(splus_prime) + log1p(sminus_prime + tplus)) - log((2 + splus_prime)/splus_prime)*(log(sminus_prime) + log1p(splus_prime + tplus)) +
+							      log1p(-tplus)*(log(sminus_prime/splus_prime) - log1p(sminus_prime + tplus) + log1p(splus_prime + tplus))) +
+	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*((log(splus_prime) + log1p(sminus_prime + tminus))*(log(sminus_prime/(2 + sminus_prime)) + log1p(-tminus) - log1p_abs_tminus) +
+							      (log(sminus_prime) + log1p(splus_prime + tminus))*(log((2 + splus_prime)/splus_prime) - log1p(-tminus) + log1p_abs_tminus)) +
+	   sminus_prime*splus_prime*(log(splus_prime/sminus_prime) + log1p(sminus_prime + tplus) - log1p(splus_prime + tplus))*(2*tminus + (1 + tminus)*(1 + tplus)*log1p_abs_tplus) +
+	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*(gsl_sf_dilog((1 + sminus_prime + tminus)/(2 + sminus_prime)) - gsl_sf_dilog((1 + splus_prime + tminus)/(2 + splus_prime)) - gsl_sf_dilog((1 + sminus_prime + tplus)/(2 + sminus_prime)) + gsl_sf_dilog((1 + splus_prime + tplus)/(2 + splus_prime))) +
 	   sminus_prime*splus_prime*(1 + tminus)*(1 + tplus)*(FCTR_tplus + FCTR_tminus));
 
 	if(alpha_tu < 0){ // Roundoff errors! Compute the integral numerically
@@ -1382,7 +1382,7 @@ private:
 	      alpha_tu += nuSIaux::w_integ[i] * nuSIaux::w_integ[j] * F[i][j];
 	    }
 	  alpha_tu *= 1./4. * (b_y - a_y) * (b_x - a_x);
-	
+
 	  alpha_tu *= SQR(SQR(g))/(16*M_PI * SQR(SQR(mphi)));
 	}
       }
@@ -1418,7 +1418,7 @@ private:
       gsl_sf_complex_dilog_xy_e(creal(z6), cimag(z6), &dilog_z6_re, &dilog_z6_im);
       gsl_sf_complex_dilog_xy_e(z7, 0, &dilog_z7_re, &dilog_z7_im);
       gsl_sf_complex_dilog_xy_e(creal(z8), cimag(z8), &dilog_z8_re, &dilog_z8_im);
-    
+
       if(majorana){
 	alpha_st = SQR(SQR(g)) / (32*M_PI*(1 + SQR(ga_red))*SQR(SQR(mphi))) *
 	  (2*ga_red*(dilog_z1_im.val - dilog_z2_im.val - dilog_z3_im.val + dilog_z4_im.val
@@ -1430,7 +1430,7 @@ private:
 	   + 2*ga_red*(carg(-(1/(1 + tplus))) - carg(-((-1 + I*ga_red + splus_prime)/(2 - I*ga_red + tplus))))*log1p(splus_prime + tplus)
 	   - 2*ga_red*(carg(-(1/(1 + tplus))) - carg(-((-1 + I*ga_red + sminus_prime)/(2 - I*ga_red + tplus))))*log1p(sminus_prime + tplus)
 	   + 2*(ga_red*carg(-1 + I*ga_red + sminus_prime) - ga_red*carg(-1 + I*ga_red + splus_prime) + log1p(SQR(-1 + splus_prime)/SQR(ga_red))/2. - log1p(SQR(-1 + sminus_prime)/SQR(ga_red))/2. + log(sminus_prime) - log(splus_prime))*
-	   (2*(tminus - tplus) + (log1p(-tminus) - log1p(-tplus))) 
+	   (2*(tminus - tplus) + (log1p(-tminus) - log1p(-tplus)))
 	   + log1p(sminus_prime + tminus)*(log1p(SQR(-1 + sminus_prime)/SQR(ga_red)) - log1p(SQR(2 + tminus)/SQR(ga_red)) - 2*(log(sminus_prime) - log(fabs(1 + tminus))))
 	   - log1p(splus_prime + tminus)*(log1p(SQR(-1 + splus_prime)/SQR(ga_red)) - log1p(SQR(2 + tminus)/SQR(ga_red)) - 2*(log(splus_prime) - log(fabs(1 + tminus))))
 	   - log1p(sminus_prime + tplus)*(log1p(SQR(-1 + sminus_prime)/SQR(ga_red)) - log1p(SQR(2 + tplus)/SQR(ga_red)) - 2*(log(sminus_prime) - log(fabs(1 + tplus))))
@@ -1465,34 +1465,34 @@ private:
 	  alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * fabs(spl_alpha_phiphi.f_eval({sminus_prime, log(-sminus_prime/tminus)/log(delta)*1.0001, log10(delta)}));
 	} else{ // Use a Taylor expansion for the non interpolated region
 	  if(tminus < -1)
-	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * ((-sminus_prime + splus_prime)*((tminus - tplus)*(splus_prime*(-2 + tminus + tplus) + sminus_prime*(-2 - 24*splus_prime + tminus + tplus)) + 
-										      4*(-(splus_prime*(1 + tminus)) + sminus_prime*(-1 + 2*splus_prime + (-1 + splus_prime)*tminus))*log(-1 - tminus) + 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tminus*log(-tminus) + 
-										      4*(splus_prime + splus_prime*tplus + sminus_prime*(1 + tplus - splus_prime*(2 + tplus)))*log(-1 - tplus) - 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tplus*log(-tplus)) + 
+	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * ((-sminus_prime + splus_prime)*((tminus - tplus)*(splus_prime*(-2 + tminus + tplus) + sminus_prime*(-2 - 24*splus_prime + tminus + tplus)) +
+										      4*(-(splus_prime*(1 + tminus)) + sminus_prime*(-1 + 2*splus_prime + (-1 + splus_prime)*tminus))*log(-1 - tminus) + 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tminus*log(-tminus) +
+										      4*(splus_prime + splus_prime*tplus + sminus_prime*(1 + tplus - splus_prime*(2 + tplus)))*log(-1 - tplus) - 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tplus*log(-tplus)) +
 						       2*SQR(sminus_prime)*log(splus_prime)*((3 + 2*splus_prime)*(tminus - tplus) + 2*SQR(splus_prime)*
-											     ((-1 - tminus)*log(-1 - tminus) + tminus*log(-tminus) + (1 + tplus)*log(-1 - tplus) - tplus*log(-tplus))) + 
-						       2*SQR(splus_prime)*log(sminus_prime)*((-3 - 2*sminus_prime)*(tminus - tplus) + 
+											     ((-1 - tminus)*log(-1 - tminus) + tminus*log(-tminus) + (1 + tplus)*log(-1 - tplus) - tplus*log(-tplus))) +
+						       2*SQR(splus_prime)*log(sminus_prime)*((-3 - 2*sminus_prime)*(tminus - tplus) +
 											     2*SQR(sminus_prime)*((1 + tminus)*log(-1 - tminus) - tminus*log(-tminus) - (1 + tplus)*log(-1 - tplus) + tplus*log(-tplus))))/(256.*M_PI*SQR(sminus_prime)*SQR(splus_prime));
 	  else if (tplus < -1)
-	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * (  (2*SQR(sminus_prime)*log(splus_prime)*((1 + tplus)*(-3 - 2*splus_prime + 2*SQR(splus_prime)*log(-1 - tplus)) - 2*SQR(splus_prime)*tplus*log(-tplus)) + 
-							  (sminus_prime - splus_prime)*((1 + tplus)*(-3*(sminus_prime + splus_prime + 8*sminus_prime*splus_prime) + (sminus_prime + splus_prime)*tplus) + 
-											4*(-(splus_prime*(1 + tplus)) + sminus_prime*(-1 + 2*splus_prime + (-1 + splus_prime)*tplus))*log(-1 - tplus) + 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tplus*log(-tplus)) + 
+	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * (  (2*SQR(sminus_prime)*log(splus_prime)*((1 + tplus)*(-3 - 2*splus_prime + 2*SQR(splus_prime)*log(-1 - tplus)) - 2*SQR(splus_prime)*tplus*log(-tplus)) +
+							  (sminus_prime - splus_prime)*((1 + tplus)*(-3*(sminus_prime + splus_prime + 8*sminus_prime*splus_prime) + (sminus_prime + splus_prime)*tplus) +
+											4*(-(splus_prime*(1 + tplus)) + sminus_prime*(-1 + 2*splus_prime + (-1 + splus_prime)*tplus))*log(-1 - tplus) + 2*(3*splus_prime + sminus_prime*(3 + 4*splus_prime))*tplus*log(-tplus)) +
 							  2*SQR(splus_prime)*log(sminus_prime)*((3 + 2*sminus_prime)*(1 + tplus) + 2*SQR(sminus_prime)*(-((1 + tplus)*log(-1 - tplus)) + tplus*log(-tplus))))/
 							 (256.*M_PI*SQR(sminus_prime)*SQR(splus_prime))
-							 + (-1 - tminus)*(-6*sminus_prime + 6*splus_prime - 2*(-2 + sminus_prime)*splus_prime*log(sminus_prime) + sminus_prime*splus_prime*SQR(log(sminus_prime)) + 2*sminus_prime*(-2 + splus_prime)*log(splus_prime) - 
+							 + (-1 - tminus)*(-6*sminus_prime + 6*splus_prime - 2*(-2 + sminus_prime)*splus_prime*log(sminus_prime) + sminus_prime*splus_prime*SQR(log(sminus_prime)) + 2*sminus_prime*(-2 + splus_prime)*log(splus_prime) -
 									  sminus_prime*splus_prime*SQR(log(splus_prime)))/(128.*M_PI*sminus_prime*splus_prime));
 	  else
-	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * (tplus - tminus)*(-6*sminus_prime + 6*splus_prime - 2*(-2 + sminus_prime)*splus_prime*log(sminus_prime) + sminus_prime*splus_prime*SQR(log(sminus_prime)) + 2*sminus_prime*(-2 + splus_prime)*log(splus_prime) - 
+	    alpha_pp = SQR(SQR(g)) / SQR(SQR(mphi)) * (tplus - tminus)*(-6*sminus_prime + 6*splus_prime - 2*(-2 + sminus_prime)*splus_prime*log(sminus_prime) + sminus_prime*splus_prime*SQR(log(sminus_prime)) + 2*sminus_prime*(-2 + splus_prime)*log(splus_prime) -
 									sminus_prime*splus_prime*SQR(log(splus_prime)))/(128.*M_PI*sminus_prime*splus_prime);
-						       
+
 	};
 	alpha_pp *= std::norm(U[flav][k]);
-	
+
 	if(majorana) // For Majorana fermions, we can scatter off neutrinos and off antineutrinos
 	  alpha_pp *= 2;
 
 	alpha_pp *= 2; // Each scattering generates at least 2 neutrinos
 	if(majorana) // For Majorana fermions, all final states are observable
-	  alpha_pp *= 2; 
+	  alpha_pp *= 2;
       }
       tot += SQR(SQR(mphi)) / (2*mn[k]) * alpha_pp;
 
@@ -1509,9 +1509,9 @@ private:
 	std::cerr<<"alpha_st + alpha_s + alpha_t = "<<alpha_st + alpha_s + alpha_t<<std::endl;
 	std::cerr<<"Possible roundoff errors for g="<<g<<", mphi="<<mphi<<", mntot="<<mntot<<std::endl;
       }
-      
+
     }
-    
+
     return tot;
   }
 
