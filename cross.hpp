@@ -7,6 +7,7 @@
 
 struct cross_sec {
   virtual double operator()(const double sminus, const double splus) const = 0;
+  virtual ~cross_sec() {}
 };
 
 struct scalar_med_s : cross_sec {

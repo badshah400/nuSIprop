@@ -55,7 +55,11 @@ class calculate_flux
    */
 
 public:
-  calculate_flux(): calculate_flux(1e7, 0.1, 0.1, 2, 1, true, false){} // We must declare a constructor without parameters for cython compatibility. For speed reasons, we set non_resonant to false. This will avoid loading the interpolating files
+  calculate_flux(): calculate_flux(1e7, 0.1, 0.1, 2, 1, true, false)
+  {
+    scalar_med_s *s = new scalar_med_s{g, mphi, scalar_width()};
+    xsec = s;
+  } // We must declare a constructor without parameters for cython compatibility. For speed reasons, we set non_resonant to false. This will avoid loading the interpolating files
 
   calculate_flux(double mphi_, double g_, double mntot_, double si_,
 		 double norm_ = 1,
@@ -104,6 +108,10 @@ public:
     flux_fla = new double *[3]; // Neutrino spectrum in flavor space
     for(int i=0; i<3; ++i)
       flux_fla[i] = new double[N_bins_E];
+
+    scalar_med_s *s = new scalar_med_s{g, mphi, scalar_width()};
+    xsec = s;
+    delete s;
 
     E_nu = new double[N_bins_E]; // Energy bin centers
     Emin = new double[N_bins_E]; // Smallest energy in each bin
@@ -158,6 +166,12 @@ public:
 
   /* Parameters that can be modified after an object has been created (see documentation in the constructor for their meaning) */
   double mphi, g, mntot, si, norm;
+
+  void set_cross_section(cross_sec &xs)
+  {
+    this->xsec = &xs;
+    cross_section_set = true;
+  }
 
   void evolve(void){
     /**
@@ -516,6 +530,8 @@ private:
   double zmax;
   int flav;
   bool phiphi;
+  bool cross_section_set = false;
+  cross_sec *xsec;
 
   // Interpolators
   interp::spline_ND<3> spl_alpha_phiphi;
@@ -682,8 +698,7 @@ private:
       double sminus = 2*mn[j]*Em/SQR(mphi);
 
       /* s-channel */
-      scalar_med_s x_s{g, mphi, Ga};
-      double Gamma_s = x_s(sminus, splus);
+      double Gamma_s = xsec->operator()(sminus, splus);
       // Prefactor: |U_{flav i}|^2 |U_{flav j}|^2 \sum_{kl} |U_{flav k}|^2 |U_{flav l}|^2
       Gamma_s *= std::norm(U[flav][j]);
       tot += SQR(mphi) / (2*mn[j]) * Gamma_s;
