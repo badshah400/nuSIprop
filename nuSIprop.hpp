@@ -421,15 +421,19 @@ public:
 
   // Assignment operator
   calculate_flux& operator=(const calculate_flux &rhs){
+    E0 = rhs.E0;
     mphi = rhs.mphi;
     g = rhs.g;
+    for (int i = 0; i < 3; ++i) { mn[i] = rhs.mn[i]; } // this is correctly set during evolve()
     mntot = rhs.mntot;
     si = rhs.si;
     norm = rhs.norm;
+    norm_total = rhs.norm_total; // this is correctly set during evolve()
     majorana = rhs.majorana;
     non_resonant = rhs.non_resonant;
     normal_ordering = rhs.normal_ordering;
     N_bins_E = rhs.N_bins_E;
+    N_integ_z = rhs.N_integ_z;
     N_steps_z = rhs.N_steps_z;
     lEmin = rhs.lEmin;
     lEmax = rhs.lEmax;
@@ -519,8 +523,8 @@ private:
   /* Parameters that are derived from the user-modifiable parameters
      These are modified each time evolve() is called, so there's no need to take care of them in constructors
      */
-  double mn[3]; // Individual neutrino masses
-  double norm_total; // Parameter encoding the global normalization of the flux
+  double mn[3] = {0.0, 0.0, 0.0}; // Individual neutrino masses
+  double norm_total{1.0}; // Parameter encoding the global normalization of the flux
 
   /* Physics functions */
 
