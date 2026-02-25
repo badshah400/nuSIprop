@@ -111,7 +111,6 @@ public:
 
     scalar_med_s *s = new scalar_med_s{g, mphi, scalar_width()};
     xsec = s;
-    delete s;
 
     E_nu = new double[N_bins_E]; // Energy bin centers
     Emin = new double[N_bins_E]; // Smallest energy in each bin

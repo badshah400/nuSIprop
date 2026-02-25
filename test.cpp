@@ -11,9 +11,9 @@ int main(){
 				   true, // Majorana neutrinos? [Default = true]
 				   true, // Include non s-channel contributions? Relevant for couplings g>~0.1 [Default = true]
 				   true, // Normal neutrino mass ordering? [Default = true]
-				   300, // Number of energy bins, uniformly distributed in log space [Default = 300]
+				   100, // Number of energy bins, uniformly distributed in log space [Default = 300]
 				   13, // log_10 (E_min/eV) [Default = 13]
-				   18, // log_10 (E_max/eV) [Default = 17]
+				   19, // log_10 (E_max/eV) [Default = 17]
 				   5, // Largest redshift at which neutrino sources are included [Default = 5]
 				   2, // Flavor of interacting neutrinos [0=e, 1=mu, 2=tau. Default = 2]
 				   false // Consider double-scalar production? If set to true, the files xsec/alpha_phiphi.bin and xsec/alphatilde_phiphi.bin must exist [Default = false]
@@ -23,7 +23,7 @@ int main(){
 	scalar_med_s xs{
 		evolver.g, evolver.mphi, SQR(evolver.g) / 16.0 / evolver.mphi
 	};
-	evolver.set_cross_section(xs);
+	// evolver.set_cross_section(xs);
   evolver.evolve();
 
   // Output the result
