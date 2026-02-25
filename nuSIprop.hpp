@@ -254,7 +254,7 @@ public:
     }
 
     double alpha_wo_mixing[N_bins_E];
-    double dlogz = log(1+z[1])-log(1+z[0]);
+    double dlogz = log1p(z[1])-log1p(z[0]);
     for(int i=N_steps_z-1; i>0; --i)   // Loop for redshift, starting from z=zmax to z=0. We will obtain the solution of the evolution equations at z[i-1]
       {
 	double H = get_H(z[i-1]); // Hubble parameter
