@@ -421,6 +421,7 @@ public:
 
   // Assignment operator
   calculate_flux& operator=(const calculate_flux &rhs){
+    if (this == &rhs) return *this;
     E0 = rhs.E0;
     mphi = rhs.mphi;
     g = rhs.g;
