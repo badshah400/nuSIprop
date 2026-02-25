@@ -1,3 +1,5 @@
+#pragma once
+
 #include <gsl/gsl_poly.h>
 #include <gsl/gsl_sf_dilog.h>
 #include <complex.h>
