@@ -114,12 +114,31 @@ public:
     };
 
   }
-  // inline double sin_sq_theta12()  { return ssq_th12[0]; }
-  // inline double sin_sq_theta23()  { return ssq_th23[0]; }
-  // inline double sin_sq_theta13()  { return ssq_th13[0]; }
-  // inline double del_cp()          { return dcp[0]; }
-  // inline double del_mass_sqr_21() { return dmsq_21[0]; }
-  // inline double del_mass_sqr_31() { return dmsq_31[0]; }
+
+  inline cmat_3x3 u_pmns(const ValPos v = ValPos::CENTRAL) const
+  {
+    cmat_3x3 U;
+    double s12=sqrt(this->operator()(mixing_params::ParName::SSQ_T12, v));
+    double c12=sqrt(1.0 - sqr(s12));
+    double s13=sqrt(this->operator()(mixing_params::ParName::SSQ_T13, v));
+    double c13=sqrt(1.0 - sqr(s13));
+    double s23=sqrt(this->operator()(mixing_params::ParName::SSQ_T23, v));
+    double c23=sqrt(1.0 - sqr(s23));
+
+    double delcp{this->operator()(mixing_params::ParName::DEL_CP, v)};
+    std::complex<double> del(cos(delcp), sin(delcp));
+    // Standard leptonic mixing matrix
+    U[0][0]=c12*c13;
+    U[0][1]=s12*c13;
+    U[0][2]=s13*1.0/del;
+    U[1][0]=-s12*c23-c12*s23*s13*del;
+    U[1][1]=c12*c23-s12*s23*s13*del;
+    U[1][2]=s23*c13;
+    U[2][0]=s12*s23-c12*c23*s13*del;
+    U[2][1]=-c12*s23-s12*c23*s13*del;
+    U[2][2]=c23*c13;
+    return U;
+  }
 
 private:
   ParamErr ssq_th12;
