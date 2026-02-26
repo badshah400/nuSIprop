@@ -59,6 +59,7 @@ public:
   {
     scalar_med_s *s = new scalar_med_s{g, mphi, scalar_width()};
     xsec = s;
+    nu_par = NU_FIT61_NOR;
   } // We must declare a constructor without parameters for cython compatibility. For speed reasons, we set non_resonant to false. This will avoid loading the interpolating files
 
   calculate_flux(double mphi_, double g_, double mntot_, double si_,
@@ -69,7 +70,8 @@ public:
     mphi(mphi_), g(g_), mntot(mntot_), si(si_),
     norm(norm_), majorana(majorana_), non_resonant(non_resonant_), normal_ordering(normal_ordering_),
     N_bins_E(N_bins_E_), lEmin(lEmin_), lEmax(lEmax_),
-    flav(flav_), phiphi(phiphi_){
+    flav(flav_), phiphi(phiphi_),
+    nu_par{normal_ordering_ ? NU_FIT61_NOR : NU_FIT61_INV} {
     /**
      * Constructor
      *
@@ -133,7 +135,6 @@ public:
     zmax = z[N_steps_z - 1];
 
     // Sines and cosines of mixing angles
-    const mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
     const cmat_3x3 _upmns = nu_par.u_pmns();
     /* Compute neutrino mixing*/
     for (unsigned int i = 0; i < _upmns.size(); ++i) {
@@ -141,6 +142,8 @@ public:
         U[i][j] = _upmns[i][j];
       }
     }
+
+    nu_par.set_masses_from_total(mntot);
 
     // Set up the phi-phi cross section interpolators only if needed to save time
     if(non_resonant && phiphi){
@@ -165,26 +168,11 @@ public:
      */
 
     /* Recompute quantities that may change from one run to another */
-    // Neutrino masses
-    const double dmq21{
-      NU_FIT61_NOR.central(mixing_params::ParName::DEL_MSQ_21)
-    }; // [eV^2] Normal Ordering, NuFIT6.1
-    const double dmqAT{
-      normal_ordering
-        ? NU_FIT61_NOR.central(mixing_params::ParName::DEL_MSQ_31)
-        : -1.0 * NU_FIT61_INV.central(mixing_params::ParName::DEL_MSQ_31)
-    };
 
-    double mL = nuSIaux::getmL(mntot, dmq21, dmqAT);
-    if(normal_ordering){
-      mn[0] = mL;
-      mn[1] = sqrt(dmq21 + SQR(mL));
-      mn[2] = sqrt(dmqAT + SQR(mL));
-    } else{
-      mn[2] = mL;
-      mn[1] = sqrt(SQR(mL) - dmqAT);
-      mn[0] = sqrt(SQR(mn[1]) - dmq21);
+    for (unsigned int i = 0; i < 3; ++i) {
+      mn[i] = nu_par.masses()[i];
     }
+
     // Normalization
     norm_total = norm / flux_FS_E0();
 
@@ -393,6 +381,7 @@ public:
     N_bins_E(orig.N_bins_E), N_steps_z(orig.N_steps_z), lEmin(orig.lEmin), lEmax(orig.lEmax),
     zmax(orig.zmax), flav(orig.flav), phiphi(orig.phiphi),
     spl_alpha_phiphi(orig.spl_alpha_phiphi), spl_alphaTilde_phiphi(orig.spl_alphaTilde_phiphi){
+    nu_par.set_masses_from_total(mntot);
     // Properly take care of the memory in the arrays
     flux = new double *[3];
     for(int i=0; i<3; ++i)
@@ -427,6 +416,8 @@ public:
     g = rhs.g;
     for (int i = 0; i < 3; ++i) { mn[i] = rhs.mn[i]; } // this is correctly set during evolve()
     mntot = rhs.mntot;
+    nu_par.set_masses_from_total(mntot);
+    // Properly take care of the memory in the arrays
     si = rhs.si;
     norm = rhs.norm;
     norm_total = rhs.norm_total; // this is correctly set during evolve()
@@ -518,6 +509,7 @@ private:
   bool phiphi;
   bool cross_section_set = false;
   cross_sec *xsec;
+  mixing_params nu_par;
 
   // Interpolators
   interp::spline_ND<3> spl_alpha_phiphi;

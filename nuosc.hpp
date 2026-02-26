@@ -55,6 +55,7 @@ public:
       normal_hierarchy{true}
   {
     //  Default constructor uses best-fit values for normal ordered masses
+    set_init_masses();
     return;
   }
 
@@ -70,6 +71,7 @@ public:
     dmsq_21 {dm2_21}, dmsq_31 {dm2_31},
     normal_hierarchy{dm2_31[ValPos::CENTRAL] > 0 ? true : false}
   {
+    set_init_masses();
     return;
   }
 
@@ -140,6 +142,28 @@ public:
     return U;
   }
 
+  void set_masses_from_total(const double mn_tot)
+  {
+    const double mL{
+        nuSIaux::getmL(
+            mn_tot, dmsq_21[ValPos::CENTRAL], dmsq_31[ValPos::CENTRAL]
+          )
+    };
+
+    if (normal_hierarchy)
+    {
+      mass[0] = mL;
+      mass[1] = sqrt(sqr(mass[0]) + dmsq_21[ValPos::CENTRAL]);
+      mass[2] = sqrt(sqr(mass[0]) + dmsq_31[ValPos::CENTRAL]);
+    } else {
+      mass[2] = mL;
+      mass[1] = sqrt(sqr(mass[2]) - dmsq_31[ValPos::CENTRAL]);
+      mass[0] = sqrt(sqr(mass[1]) + dmsq_21[ValPos::CENTRAL]);
+    }
+  }
+
+  inline const std::array<double, 3> & masses() const { return mass; }
+
 private:
   ParamErr ssq_th12;
   ParamErr ssq_th23;
@@ -148,6 +172,21 @@ private:
   ParamErr dmsq_21; // in eV^2
   ParamErr dmsq_31; // in eV^2
   bool normal_hierarchy;
+  std::array<double, 3> mass;
+
+  void set_init_masses()
+  {
+    if (normal_hierarchy)
+    {
+      mass[0] = 0.0;
+      mass[1] = sqrt(dmsq_21[ValPos::CENTRAL]);
+      mass[2] = sqrt(dmsq_31[ValPos::CENTRAL]); 
+    } else {
+      mass[2] = 0.0;
+      mass[1] = sqrt(-1.0 * dmsq_31[ValPos::CENTRAL]);
+      mass[0] = sqrt(sqr(mass[1]) + dmsq_21[ValPos::CENTRAL]); 
+    }
+  }
 };
 
 const mixing_params NU_FIT61_NOR {
