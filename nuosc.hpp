@@ -1,6 +1,13 @@
 // vim: set et ai ts=2 sw=2 tw=80:
+#include "aux.hpp"
 #include <cmath>
+#include <complex>
 #include <array>
+
+static inline double sqr(const double x) {return x*x;}
+
+// used for mixing matrix U_PMNS
+typedef std::array<std::array<std::complex<double>, 3> ,3> cmat_3x3;
 
 // parameter central value and its 1/3 sigma uncertainties organised as:
 // {central value, -1sigma, +1sigma, -3sigma, +3sigma}
@@ -44,7 +51,8 @@ public:
         2.521E-03 - 1.8E-05,
         2.521E-03 + 2.6E-05,
         2.454E-03, 2.592E-03
-      }
+      },
+      normal_hierarchy{true}
   {
     //  Default constructor uses best-fit values for normal ordered masses
     return;
@@ -59,12 +67,15 @@ public:
     const ParamErr & dm2_31
   ):
     ssq_th12 {s2_12}, ssq_th23 {s2_23}, ssq_th13 {s2_13}, dcp {delcp},
-    dmsq_21 {dm2_21}, dmsq_31 {dm2_31}
+    dmsq_21 {dm2_21}, dmsq_31 {dm2_31},
+    normal_hierarchy{dm2_31[ValPos::CENTRAL] > 0 ? true : false}
   {
     return;
   }
 
   enum ParName {SSQ_T12=0, SSQ_T23, SSQ_T13, DEL_CP, DEL_MSQ_21, DEL_MSQ_31};
+
+  inline bool is_normal_ordered() {return normal_hierarchy;}
 
   inline double operator()(const ParName & p, const ValPos & e) const
   {
@@ -117,6 +128,7 @@ private:
   ParamErr dcp;     // in rad
   ParamErr dmsq_21; // in eV^2
   ParamErr dmsq_31; // in eV^2
+  bool normal_hierarchy;
 };
 
 const mixing_params NU_FIT61_NOR {
@@ -158,6 +170,6 @@ const mixing_params NU_FIT61_INV {
   {7.537E-05, 7.537E-05 - 1.0E-06, 7.537E-05 + 9.4E-07, 7.236E-05, 7.822E-05},
 
   // \Delta m^{2}_{31} [eV^2]
-  {2.500E-03, 2.500E-03 - 2.3E-05, 2.500E-03 + 2.4E-05, 2.430E-03, 2.569E-03}
+  {-2.500E-03, -2.500E-03 - 2.3E-05, -2.500E-03 + 2.4E-05, 2.430E-03, 2.569E-03}
 };
 
