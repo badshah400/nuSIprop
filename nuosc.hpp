@@ -156,6 +156,7 @@ public:
       mass[1] = sqrt(sqr(mass[0]) + dmsq_21[ValPos::CENTRAL]);
       mass[2] = sqrt(sqr(mass[0]) + dmsq_31[ValPos::CENTRAL]);
     } else {
+      // lightest species is m_3; dmsq_31 is actually -dmsq_32
       mass[2] = mL;
       mass[1] = sqrt(sqr(mass[2]) - dmsq_31[ValPos::CENTRAL]);
       mass[0] = sqrt(sqr(mass[1]) + dmsq_21[ValPos::CENTRAL]);
