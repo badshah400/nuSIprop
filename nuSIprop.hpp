@@ -134,26 +134,13 @@ public:
 
     // Sines and cosines of mixing angles
     const mixing_params nu_par = normal_ordering ? NU_FIT61_NOR : NU_FIT61_INV;
+    const cmat_3x3 _upmns = nu_par.u_pmns();
     /* Compute neutrino mixing*/
-    double s12=sqrt(nu_par.central(mixing_params::ParName::SSQ_T12));
-    double c12=sqrt(1.0 - SQR(s12));
-    double s13=sqrt(nu_par.central(mixing_params::ParName::SSQ_T13));
-    double c13=sqrt(1.0 - SQR(s13));
-    double s23=sqrt(nu_par.central(mixing_params::ParName::SSQ_T23));
-    double c23=sqrt(1.0 - SQR(s23));
-
-    double dcp{nu_par.central(mixing_params::ParName::DEL_CP)};
-    std::complex<double> del(cos(dcp), sin(dcp));
-    // Standard leptonic mixing matrix
-    U[0][0]=c12*c13;
-    U[0][1]=s12*c13;
-    U[0][2]=s13*1.0/del;
-    U[1][0]=-s12*c23-c12*s23*s13*del;
-    U[1][1]=c12*c23-s12*s23*s13*del;
-    U[1][2]=s23*c13;
-    U[2][0]=s12*s23-c12*c23*s13*del;
-    U[2][1]=-c12*s23-s12*c23*s13*del;
-    U[2][2]=c23*c13;
+    for (unsigned int i = 0; i < _upmns.size(); ++i) {
+      for (unsigned int j = 0; j < _upmns[i].size(); ++j) {
+        U[i][j] = _upmns[i][j];
+      }
+    }
 
     // Set up the phi-phi cross section interpolators only if needed to save time
     if(non_resonant && phiphi){
