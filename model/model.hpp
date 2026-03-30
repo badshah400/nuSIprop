@@ -7,7 +7,7 @@
 // system: PDG natural units
 // mass: MeV
 
-#include "model/misc.hpp"
+#include "misc.hpp"
 #include <complex>
 #include <fmt/format.h>
 
@@ -19,15 +19,12 @@ inline double s(const double E_nu,   // MeV
 }
 
 enum class MassHierarchy { NORMAL = 0, INVERTED = 1 };
-enum class ScatterChannels : int {
+enum struct ScatterChannels : int {
     NONE = -1,
-    S = 100,
-    T = 10,
-    U = 1,
-    ST = 110,
-    SU = 101,
-    TU = 11,
-    ALL = 0
+    ALL = 0,
+    S = 2,
+    T = 3,
+    U = 5,
 };
 
 class Model {

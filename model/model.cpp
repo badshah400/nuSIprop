@@ -5,7 +5,7 @@
 // system: PDG natural units
 // mass: MeV
 
-#include "model/model.hpp"
+#include "model.hpp"
 #include <gsl/gsl_integration.h>
 #include <stdexcept>
 
@@ -49,11 +49,21 @@ std::complex<double>
 KKModel::sum_amp(const double y, const double cos_th,
                  [[maybe_unused]] const ScatterChannels chan) {
     std::complex<double> res{0.0, 0.0};
+    auto cmp_channel = [](const ScatterChannels user_chan,
+                          const ScatterChannels test_chan) {
+        return (static_cast<int>(user_chan) % static_cast<int>(test_chan)) ==
+               0;
+    };
     for (unsigned int i = 1; i <= KKModel::N_MODES; ++i) {
-        // std::complex<double> amp_i{0.0, 0.0};
-        res += amp_n(ScatterChannels::S, y, cos_th, i) +
-               amp_n(ScatterChannels::T, y, cos_th, i) +
-               amp_n(ScatterChannels::U, y, cos_th, i);
+        if (cmp_channel(chan, ScatterChannels::S)) {
+            res += amp_n(ScatterChannels::S, y, cos_th, i);
+        }
+        if (cmp_channel(chan, ScatterChannels::T)) {
+            res += amp_n(ScatterChannels::T, y, cos_th, i);
+        }
+        if (cmp_channel(chan, ScatterChannels::U)) {
+            res += amp_n(ScatterChannels::U, y, cos_th, i);
+        }
     }
     return res;
 }

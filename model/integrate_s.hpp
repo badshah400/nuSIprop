@@ -7,7 +7,7 @@
  * final energies
  */
 
-#include "model/misc.hpp"
+#include "misc.hpp"
 #include <gsl/gsl_integration.h>
 #include <tuple>
 
