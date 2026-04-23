@@ -1,9 +1,12 @@
 #pragma once
 
-#include <numbers>
 #include <array>
+#include <cstddef>
+#include <numbers>
 
 typedef std::array<double, 3> arr3;
+
+typedef std::tuple<double, size_t> ResultType;
 
 using std::numbers::pi;
 

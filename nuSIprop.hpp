@@ -5,8 +5,8 @@
 #include "aux.hpp"
 #include "cross.hpp"
 #include "nuosc.hpp"
-#include <model/model.hpp>
-#include <model/integrate_s.hpp>
+#include "model/model.hpp"
+#include "model/integrate_s.hpp"
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_sf_dilog.h>
@@ -14,6 +14,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
+#include <tuple>
 
 #define SQR(x)  ((x)*(x))  // square of a number
 #define CUB(x)  ((x)*(x)*(x))  // cube of a number
@@ -113,8 +114,8 @@ public:
     for(int i=0; i<3; ++i)
       flux_fla[i] = new double[N_bins_E];
 
-    scalar_med_s *s = new scalar_med_s{g, mphi, scalar_width()};
-    xsec = s;
+    // auto *s = new KKMuTau{g, mphi / MeV_TO_eV, 0.0};
+    // xsec = s;
 
     E_nu = new double[N_bins_E]; // Energy bin centers
     Emin = new double[N_bins_E]; // Smallest energy in each bin
@@ -660,13 +661,18 @@ private:
   }
 
   double Gamma(double Em, double Ep) {
-    const double eV_TO_MeV = 1.0E-6;
-    auto mod1 = KKModel{1.0, 10.0, 0.0, MASS_NU_NOR_V61};
+    auto mod1 = KKModel{g, mphi / MeV_TO_eV, 0.0,
+      normal_ordering? MASS_NU_NOR_V61: MASS_NU_INV_V61};
     auto ig_mod1 = IntegrateS<KKModel>{mod1};
-    const double s_minus = 2.0 * Em * eV_TO_MeV * mod1.mass_nu1() / SQR(mod1.mass_zero());
-    const double s_plus = 2.0 * Ep * eV_TO_MeV *  mod1.mass_nu1() / SQR(mod1.mass_zero());
-    return std::get<0>(ig_mod1(s_minus, s_plus)) * SQR(eV_TO_MeV);
-
+    double res{0.0};
+    for (auto mass_nu : {mod1.mass_nu1(), mod1.mass_nu3()}) {
+      const double s_minus = 2.0 * (Em / MeV_TO_eV) * mass_nu /
+        SQR(mod1.mass_zero());
+      const double s_plus  = 2.0 * (Ep / MeV_TO_eV) * mass_nu /
+        SQR(mod1.mass_zero());
+      res += std::get<0>(ig_mod1(s_minus, s_plus));
+    }
+    return res * SQR(MeV_TO_eV);
   }
 
   double alphaTilde(double Em, double Ep){

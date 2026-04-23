@@ -6,10 +6,10 @@
 // mass: MeV
 
 #include "model.hpp"
+#include <algorithm>
 #include <gsl/gsl_integration.h>
+#include <ranges>
 #include <stdexcept>
-
-const unsigned int KKModel::N_MODES{10};
 
 double KKModel::cos_sqr_factor(const double m_ini) {
     return sqr(cos(m_ini * y_SM));
@@ -19,72 +19,91 @@ double KKModel::gamma_2(const double m_ini) {
     return sqr(gD) * cos_sqr_factor(m_ini) * m_ini / 12.0 / pi;
 }
 
-std::complex<double> KKModel::amp_n(const ScatterChannels ch, const double y,
-                                    const double cos_theta,
-                                    const unsigned int n) {
+double KKModel::dsigma_dcos(const double y, const double cos_th) {
+    ///
+    /// Return the |M^2| as a function of scaled s (= `y`) and cos(theta) =
+    /// `cos_th`, where theta is the scattering angle.
+    ///
+    /// |M^2| is plugged in from symbolic calculations as a product of
+    /// amplitudes:
+    /// |M^2| = |\sum_{i=1}^{N_MODES} \sum_{j=1}^{N_MODES} x
+    ///          (S_i * conj(S_j) + T_i * conj(T_j) + S_i * conj(T_j)...) |,
+    /// where S_i is the s-channel amplitude for the i-th KK mode and so on.
+    ///
     using namespace std::complex_literals;
-    auto scaled_t = -0.5 * y * (1 - cos_theta);
-    auto scaled_u = -0.5 * y * (1 + cos_theta);
-    // |M|^2 numerator is 2*u^2 consistently for every term,
-    // so we multiply (sqrt(2) * u) with the amplitude for each term
-    auto res = cos_sqr_factor(n) * sqrt(2.0) * scaled_u;
-    switch (ch) {
-    case ScatterChannels::S:
-        // mZ/m0 = 2n-1
-        return res / (y - sqr(mass_Zn(n) / m_0) +
-                      (1.0i * gamma_2(mass_Zn(n)) * mass_Zn_factor(n)));
-        break;
-    case ScatterChannels::T:
-        return res / (scaled_t - sqr(mass_Zn_factor(n)));
-        break;
-    case ScatterChannels::U:
-        return res / (scaled_u - sqr(mass_Zn_factor(n)));
-        break;
-    default:
-        return 0.0;
-    }
-}
-
-std::complex<double>
-KKModel::sum_amp(const double y, const double cos_th,
-                 [[maybe_unused]] const ScatterChannels chan) {
-    std::complex<double> res{0.0, 0.0};
-    auto cmp_channel = [](const ScatterChannels user_chan,
-                          const ScatterChannels test_chan) {
-        return (static_cast<int>(user_chan) % static_cast<int>(test_chan)) ==
-               0;
+    auto scaled_t = -0.5 * y * (1 - cos_th); // t / m_0^2
+    auto scaled_u = -0.5 * y * (1 + cos_th); // u / m_0^2
+    auto amp_s_nth = [this, &y](const size_t n) {
+        auto num = cos_sqr_factor(n) * sqrt(2.0);
+        return num / (y - sqr(mass_Zn_factor(n)) -
+                      1.0i * gamma_2(mass_Zn(n)) * mass_Zn(n) / sqr(m_0));
     };
-    for (unsigned int i = 1; i <= KKModel::N_MODES; ++i) {
-        if (cmp_channel(chan, ScatterChannels::S)) {
-            res += amp_n(ScatterChannels::S, y, cos_th, i);
-        }
-        if (cmp_channel(chan, ScatterChannels::T)) {
-            res += amp_n(ScatterChannels::T, y, cos_th, i);
-        }
-        if (cmp_channel(chan, ScatterChannels::U)) {
-            res += amp_n(ScatterChannels::U, y, cos_th, i);
+    auto amp_t_nth = [this, &scaled_t](const size_t n) {
+        auto num = cos_sqr_factor(n) * sqrt(2.0);
+        return num / (scaled_t - sqr(mass_Zn_factor(n)));
+    };
+    auto amp_u_nth = [this, &scaled_u](const size_t n) {
+        auto num = cos_sqr_factor(n) * sqrt(2.0);
+        return num / (scaled_u - sqr(mass_Zn_factor(n)));
+    };
+
+    std::complex<double> nu_anu_ss{0.0i}, nu_anu_st{0.0i}, nu_anu_tt{0.0i};
+    std::complex<double> nu_nu_uu{0.0i}, nu_nu_tu{0.0i};
+    [[maybe_unused]] std::array<std::complex<double>, N_MODES> amp_s;
+    [[maybe_unused]] std::array<std::complex<double>, N_MODES> amp_t;
+    [[maybe_unused]] std::array<std::complex<double>, N_MODES> amp_u;
+    std::generate(amp_s.begin(), amp_s.end(), [&amp_s_nth, N = 0u]() mutable {
+        return amp_s_nth(++N);
+    });
+    std::generate(amp_t.begin(), amp_t.end(), [&amp_t_nth, N = 0u]() mutable {
+        return amp_t_nth(++N);
+    });
+    std::generate(amp_u.begin(), amp_u.end(), [&amp_u_nth, N = 0u]() mutable {
+        return amp_u_nth(++N);
+    });
+
+    for (auto i : std::views::iota(1u, N_MODES + 1)) {
+        for (auto j : std::views::iota(1u, N_MODES + 1)) {
+            nu_anu_ss += (amp_s[i - 1] * std::conj(amp_s[j - 1])); // S_i * S_j
+            nu_anu_tt += (amp_t[i - 1] * std::conj(amp_t[j - 1])); // T_i * T_j
+            nu_anu_st += (amp_s[i - 1] * std::conj(amp_t[j - 1])); // S_i * T_j
+            nu_nu_uu += (amp_u[i - 1] * std::conj(amp_u[j - 1]));  // U_i * U_j
+            nu_nu_tu += (amp_u[i - 1] * std::conj(amp_t[j - 1]));  // U_i * T_j
         }
     }
-    return res;
+
+    // Additional factor of 0.5 for nu-nu identical final states
+    return 2.0 *  // \sum |U^2_{mu l} - U^2_{tau k}|
+           std::abs((sqr(scaled_t) * nu_anu_ss) +       // nu-anu
+                    (1.5 * sqr(scaled_u) * nu_anu_tt) + // nu-anu + nu-nu
+                    (0.5 * sqr(y) * nu_nu_uu) +         // nu-nu
+                    (2.0 * sqr(scaled_u) * std::real(nu_anu_st)) + // nu-anu
+                    (2.0 * 0.5 * sqr(y) * std::real(nu_nu_tu))     // nu-nu
+           );
 }
 
-double KKModel::sigma(const double y, const ScatterChannels chan) {
+double KKModel::sigma(const double y,
+                      [[maybe_unused]] const ScatterChannels chan) {
     // Compute
     //             /
     //             | |M|^2 d(cos_theta)
     //             /
     double res{0.0}, err{0.0};
 
-    // integrand: use capture-less lambda for gsl C-type function
+    // integrand: use capture-less lambda for gsl C-style function. `x` is the
+    // cos_theta and `y` is obtained from the par instead.
+    //
+    // Note: we need to pass everything via the `void * par`, which is awkward,
+    // but no way out since captured lambdas are a pain to transform to C-style
+    // functions used by GSL.
     auto ig_func = [](double x, void *par) {
-        auto *mypars =
-            static_cast<std::tuple<KKModel *, double, ScatterChannels> *>(par);
+        auto *mypars = static_cast<std::tuple<KKModel *, const double> *>(par);
         auto obj = std::get<0>(*mypars);
-        auto amp = obj->sum_amp(std::get<1>(*mypars), x, std::get<2>(*mypars));
-        return std::norm(amp);
+        return obj->dsigma_dcos(std::get<1>(*mypars), x);
     };
-    auto gsl_params = std::make_tuple(this, y, chan);
+    auto gsl_params = std::make_tuple(this, y);
 
+    // Integration bull-work starts
     gsl_function F;
     F.function = ig_func;
     F.params = &gsl_params;
@@ -100,7 +119,7 @@ double KKModel::sigma(const double y, const ScatterChannels chan) {
                                       GSL_ABS_ERROR,
                                       GSL_REL_ERROR,
                                       GSL_WSPACE_LIMIT,
-                                      GSL_INTEG_GAUSS41,
+                                      GSL_INTEG_GAUSS21,
                                       w,
                                       &res,
                                       &err);
@@ -109,9 +128,12 @@ double KKModel::sigma(const double y, const ScatterChannels chan) {
         throw std::runtime_error{
             "Invalid return status from gsl integration."};
     }
+    //                           /
+    // Integration ends; `res` = | |M|^2 d(cos_theta) in CM frame if successful
+    //                           /
 
-    //            /
-    //    sigma = | |M|^2 d(cos_theta) / (32*pi*s)
-    //            /
-    return sqr(sqr(gD)) * res / y / 32.0 / std::numbers::pi / sqr(m_0);
+    //                  /
+    //    sigma = g^4 * | |M|^2 d(cos_theta) / (32*pi*s)
+    //                  /
+    return sqr(sqr(gD)) * res / y / 32.0 / pi / sqr(m_0);
 }

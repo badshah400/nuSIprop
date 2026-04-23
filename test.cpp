@@ -4,16 +4,16 @@
 int main() {
   // Construct evolver object
   nuSIprop::calculate_flux evolver(
-      5e6,  // Mediator mass [eV]
+      1e7,  // Mediator mass [eV]
       0.01, // Coupling
-      0.1,  // Sum of neutrino masses [eV]
+      0.12,  // Sum of neutrino masses [eV]
       2.5,  // Spectral index
       6,    // Normalization of the free-streaming flux at 100 TeV [Default = 1]
-      true, // Majorana neutrinos? [Default = true]
+      false, // Majorana neutrinos? [Default = true]
       true, // Include non s-channel contributions? Relevant for couplings
             // g>~0.1 [Default = true]
       true, // Normal neutrino mass ordering? [Default = true]
-      100, // Number of energy bins, uniformly distributed in log space [Default
+      500, // Number of energy bins, uniformly distributed in log space [Default
            // = 300]
       13,  // log_10 (E_min/eV) [Default = 13]
       19,  // log_10 (E_max/eV) [Default = 17]
@@ -26,9 +26,8 @@ int main() {
   );
 
   // Evolve it
-  scalar_med_s xs{evolver.g, evolver.mphi,
-                  SQR(evolver.g) / 16.0 / evolver.mphi};
-  // evolver.set_cross_section(xs);
+  KKMuTau xs{evolver.g, evolver.mphi, 0.0};
+  evolver.set_cross_section(xs);
   evolver.evolve();
 
   // Output the result
