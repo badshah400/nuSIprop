@@ -21,6 +21,7 @@ template <typename T> class IntegrateS {
         model = IG.model;
         err_rel = IG.err_rel;
         err_abs = IG.err_abs;
+        return *this;
     }
 
     ResultType operator()(const double s_minus, const double s_plus) const {
