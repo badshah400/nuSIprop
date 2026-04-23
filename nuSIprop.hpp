@@ -374,6 +374,18 @@ public:
     return E_nu[i];
   }
 
+  inline double get_energy_min(int i) {
+    if(i<0) {
+      std::cerr<<"You asked for the energy at the bin "<<i<<"<0! Zero will be returned."<<std::endl;
+      return 0;
+    } else if(i > N_bins_E){
+      std::cerr<<"You asked for the energy at the bin "<<i<<", but there are only "<<N_bins_E<<" bins! Zero will be returned."<<std::endl;
+      return 0;
+    }
+
+    return Emin[i];
+  }
+
   /* Constructors and destructors that take proper care of the dynamic memory */
 
   // Copy constructor

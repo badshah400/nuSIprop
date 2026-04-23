@@ -34,7 +34,7 @@ int main() {
   printf("#Energy[eV]  nu_e flux   nu_mu flux  nu_tau flux\n");
   for (int i = 0; i < evolver.get_N_bins_E(); ++i)
     printf("%.5e  %.4e  %.4e  %.4e\n",
-           evolver.get_energy(i),      // Energy bin centers
+           evolver.get_energy_min(i),  // Energy bin minimum
            evolver.get_flux_fla(0, i), // nu_e flux
            evolver.get_flux_fla(1, i), // nu_mu flux
            evolver.get_flux_fla(2, i)  // nu_tau flux
