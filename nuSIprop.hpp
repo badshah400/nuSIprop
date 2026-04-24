@@ -193,6 +193,8 @@ public:
     double *tbl_Gamma = new double[N_bins_E + N_steps_z - 2]; // tbl_Gamma[i] = Gamma(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
     double *tbl_alphaTilde = new double[N_bins_E + N_steps_z - 2];  // tbl_alphaTilde[i] = alphaTilde(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
     double **tbl_alpha = new double *[N_bins_E + N_steps_z - 2];  // tbl_alpha[i][m] = alpha(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]), Emin[m-k]*(1+z[k]), Emax[m-k]*(1+z[k]))
+
+// This is the main energy bin loop; so parallelise this, not the parent loop
 #pragma omp parallel for
     for(int i=0; i<N_bins_E + N_steps_z - 2; ++i){
       double Emin_i, Emax_i;
