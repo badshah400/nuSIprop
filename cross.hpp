@@ -2,11 +2,13 @@
 #pragma once
 
 #include <cmath>
-
+#include "model/integrate_s.hpp"
+#include "model/misc.hpp"
+#include "model/model.hpp"
 #include "aux.hpp"
 
 struct cross_sec {
-  virtual double operator()(const double sminus, const double splus) const = 0;
+  virtual ResultType operator()(const double sminus, const double splus) const = 0;
   virtual ~cross_sec() {}
 };
 
@@ -18,7 +20,7 @@ struct scalar_med_s : cross_sec {
   double g;
   double mediator_mass;
   double decay_width;
-  double operator()(const double sminus, const double splus) const override {
+  ResultType operator()(const double sminus, const double splus) const override {
     double Gamma_s{0.0};
     if (splus < 1e-5) // We Taylor-expand atandiff to avoid roundoff errors
     {
@@ -57,6 +59,34 @@ struct scalar_med_s : cross_sec {
                       (SQR(this->mediator_mass) + SQR(this->decay_width)) *
                       sminus * (sminus - 2))));
     }
-    return Gamma_s;
+    return std::make_tuple(Gamma_s, 0.0);
   }
+};
+
+struct KKMuTau: cross_sec {
+  KKMuTau():
+    _g{1.0E-02},
+    _mKK{10.0},
+    _ySM{0.0},
+    // _mod1{_g, _mKK, _ySM, MASS_NU_NOR_V61},
+    _ig{IntegrateS<KKModel>{KKModel(_g, _mKK, _ySM, MASS_NU_NOR_V61)}}
+  { }
+
+  KKMuTau(const double g, const double m0, const double ySM):
+    _g{g},
+    _mKK{m0},
+    _ySM{ySM},
+    _ig{IntegrateS<KKModel>{KKModel(_g, _mKK, _ySM, MASS_NU_NOR_V61)}}
+  { }
+
+  ResultType operator()(const double s0, const double s1) const override final {
+    return _ig.operator()(s0 / MeV_TO_eV, s1 / MeV_TO_eV);
+  }
+  
+private:
+  double _g;
+  double _mKK;
+  double _ySM;
+  // KKModel _mod1;
+  IntegrateS<KKModel> _ig;
 };

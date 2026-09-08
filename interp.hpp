@@ -139,9 +139,9 @@ namespace interp{
       N_dat = new int[N_dim](); // The () fills N_dat with zeros
       x = new double *[N_dim];
       for(int i=0; i<N_dim; ++i)
-	x[i] = new double[0];
+        x[i] = new double[](0);
 
-      f = new double[0];
+      f = new double[](0);
 
       computeWeights();
     }
