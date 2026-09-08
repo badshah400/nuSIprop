@@ -29,7 +29,7 @@ add_project_arguments('-march=native', language: 'cpp')
 #   add_project_arguments('-fanalyzer', language: 'cpp')
 # endif
 
-incdir = include_directories('.', './model/')
+incdir = include_directories('.', 'model', 'indicators')
 
 src  = [
   'model/model.cpp',
@@ -46,8 +46,11 @@ deps = [
 #   deps         += [ tcmalloc_lib ]
 # endif
 
+subdir('events')
+subdir('chisq')
+
 main_exe  = executable(meson.project_name(),
-  src + [ 'test.cpp' ],
+  src + [ 'nuflux.cpp' ],
   include_directories: incdir,
   dependencies : deps,
   install      : true,

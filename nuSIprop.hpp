@@ -7,7 +7,12 @@
 #include "nuosc.hpp"
 #include "model/model.hpp"
 #include "model/integrate_s.hpp"
+#include "indicators/block_progress_bar.hpp"
+#include "indicators/cursor_control.hpp"
 
+#include <atomic>
+#include <fmt/format.h>
+#include <fmt/os.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_sf_dilog.h>
 #include <complex.h>
@@ -74,7 +79,22 @@ public:
     norm(norm_), majorana(majorana_), non_resonant(non_resonant_), normal_ordering(normal_ordering_),
     N_bins_E(N_bins_E_), lEmin(lEmin_), lEmax(lEmax_),
     flav(flav_), phiphi(phiphi_),
-    nu_par{normal_ordering_ ? NU_FIT61_NOR : NU_FIT61_INV} {
+    nu_par{normal_ordering_ ? NU_FIT61_NOR : NU_FIT61_INV},
+    progbar{
+      indicators::option::PrefixText{
+        std::string{normal_ordering? "NH / ": "IH / "} +
+        fmt::format("mKK: {:.2F} MeV / ", mphi / MeV_TO_eV) +
+        fmt::format("gamma: {:.2F} ", si)
+      },
+      indicators::option::BarWidth{50},
+      indicators::option::Start{"["},
+      indicators::option::End{"]"},
+      indicators::option::ForegroundColor{indicators::Color::magenta},
+      indicators::option::ShowPercentage{true},
+      indicators::option::ShowElapsedTime{true},
+      indicators::option::FontStyles{std::vector<indicators::FontStyle> {
+        indicators::FontStyle::bold }}
+    } {
     /**
      * Constructor
      *
@@ -121,7 +141,7 @@ public:
     Emin = new double[N_bins_E]; // Smallest energy in each bin
     Emax = new double[N_bins_E]; // Largest energy in each bin
 
-    for(int i=0; i<N_bins_E; ++i){
+    for(uint i=0; i<N_bins_E; ++i){
       Emin[i] = pow(10, lEmin + (lEmax-lEmin) * (i*1.0) / N_bins_E);
       E_nu[i] = pow(10, lEmin + (lEmax-lEmin) * (i+0.5) / N_bins_E);
       Emax[i] = pow(10, lEmin + (lEmax-lEmin) * (i+1.0) / N_bins_E);
@@ -133,7 +153,7 @@ public:
      */
     N_steps_z = log((1+zmax_) / (1+0)) / log(Emax[0]/Emin[0]) + 2; // Number of redshift steps
     z = new double[N_steps_z]; // Redshift steps, ordered from z=0 to z=zmax
-    for(int i=0; i<N_steps_z; ++i)
+    for(uint i=0; i<N_steps_z; ++i)
       z[i] = (1+0) * pow(Emax[0]/Emin[0], i) - 1;
     zmax = z[N_steps_z - 1];
 
@@ -179,9 +199,9 @@ public:
     // Normalization
     norm_total = norm / flux_FS_E0();
 
-    for(int i=0; i<3; ++i)
-      for(int j=0; j<N_bins_E; ++j)
-	flux[i][j] = 0;
+    for(uint i=0; i<3; ++i)
+      for(uint j=0; j<N_bins_E; ++j)
+        flux[i][j] = 0;
 
     // The evolution equations will be M*flux = v, and the solution will be stored in x
     gsl_matrix *M = gsl_matrix_alloc(3, 3);
@@ -189,14 +209,18 @@ public:
     gsl_vector *x = gsl_vector_alloc(3);
     gsl_permutation *p = gsl_permutation_alloc(3); // Auxiliary variable needed by GSL
 
+    const uint max_steps = N_bins_E + N_steps_z - 2;
     // Auxiliary tables with integrals: we allocate them in the heap to avoid running out of memory
-    double *tbl_Gamma = new double[N_bins_E + N_steps_z - 2]; // tbl_Gamma[i] = Gamma(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
-    double *tbl_alphaTilde = new double[N_bins_E + N_steps_z - 2];  // tbl_alphaTilde[i] = alphaTilde(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
-    double **tbl_alpha = new double *[N_bins_E + N_steps_z - 2];  // tbl_alpha[i][m] = alpha(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]), Emin[m-k]*(1+z[k]), Emax[m-k]*(1+z[k]))
+    double *tbl_Gamma = new double[max_steps]; // tbl_Gamma[i] = Gamma(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
+    double *tbl_alphaTilde = new double[max_steps];  // tbl_alphaTilde[i] = alphaTilde(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]))
+    double **tbl_alpha = new double *[max_steps];  // tbl_alpha[i][m] = alpha(Emin[i-k]*(1+z[k]), Emax[i-k]*(1+z[k]), Emin[m-k]*(1+z[k]), Emax[m-k]*(1+z[k]))
 
-// This is the main energy bin loop; so parallelise this, not the parent loop
-#pragma omp parallel for
-    for(int i=0; i<N_bins_E + N_steps_z - 2; ++i){
+    indicators::show_console_cursor(false);
+    std::atomic<int> progress{0};
+    progbar.set_progress(0.0f);
+
+#pragma omp parallel for schedule(dynamic)
+    for(uint i = 0; i < max_steps; ++i) {
       double Emin_i, Emax_i;
       if (i < N_bins_E){
 	Emin_i = Emin[i];
@@ -209,7 +233,7 @@ public:
       tbl_alphaTilde[i] = alphaTilde(Emin_i, Emax_i);
 
       tbl_alpha[i] = new double[N_bins_E + N_steps_z - 2];
-      for(int m=i+1; m<N_bins_E + N_steps_z - 2; ++m){
+      for(uint m=i+1; m<N_bins_E + N_steps_z - 2; ++m){
 	double Emax_m, Emin_m;
 	if (m < N_bins_E){
 	  Emin_m = Emin[m];
@@ -220,9 +244,14 @@ public:
 	}
 	tbl_alpha[i][m] = alpha(Emin_i, Emax_i, Emin_m, Emax_m);
       }
+      progbar.set_progress((++progress) * 100.0 /*percent*/ / max_steps);
+      progbar.set_option(indicators::option::PostfixText{
+          fmt::format("  {:4d}/{:4d} steps", progress.load(), max_steps) });
     }
+    progbar.mark_as_completed();
+    indicators::show_console_cursor(true);
 
-    double alpha_wo_mixing[N_bins_E];
+    double * alpha_wo_mixing = new double[N_bins_E];
     double dlogz = log1p(z[1])-log1p(z[0]);
     for(int i=N_steps_z-1; i>0; --i)   // Loop for redshift, starting from z=zmax to z=0. We will obtain the solution of the evolution equations at z[i-1]
       {
@@ -233,11 +262,11 @@ public:
 	// Thus, when we sum over alpha we are computing many times essentially the same quantity.
 	// To speed everything up, the variable alpha_cum keeps track of alpha
 
-	for(int j=N_bins_E; j>0; --j){ // Loop over energies, starting from highest energies. Current energy bin = E_nu[j-1]
+	for(uint j=N_bins_E; j>0; --j){ // Loop over energies, starting from highest energies. Current energy bin = E_nu[j-1]
 	  double Gamma_wo_mixing = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_Gamma[j+i-2]; //Gamma(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]));
 	  double alphaTilde_wo_mixing = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_alphaTilde[j+i-2]; // alphaTilde(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]));
 	  if(non_resonant)
-	    for(int m=j; m<N_bins_E; ++m)
+	    for(uint m=j; m<N_bins_E; ++m)
 	      alpha_wo_mixing[m] = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_alpha[j+i-2][m+i-1]; //alpha(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]), Emin[m]*(1+z[i-1]), Emax[m]*(1+z[i-1]));
 	  else if (j!=N_bins_E){
 	    alpha_wo_mixing[j] = get_nd(z[i-1]) / SQR(1+z[i-1]) * tbl_alpha[j+i-2][j+i-1]; // alpha(Emin[j-1]*(1+z[i-1]), Emax[j-1]*(1+z[i-1]), Emin[j]*(1+z[i-1]), Emax[j]*(1+z[i-1]));
@@ -253,7 +282,7 @@ public:
 	      for(int l=0; l<3; ++l) // Loop over flavors
 		src += (1+z[i-1])*dlogz/H * alpha_cum[l] * std::norm(U[flav][k]) * std::norm(U[flav][l]) * (Emax[j-1]-Emin[j-1]);
 	    else
-	      for(int m=j; m<N_bins_E; ++m) // Loop over bins with energies er[m], with m>=j
+	      for(uint m=j; m<N_bins_E; ++m) // Loop over bins with energies er[m], with m>=j
 		for(int l=0; l<3; ++l) // Loop over flavors
 		  src += (1+z[i-1])*dlogz/H * flux[l][m] * alpha_wo_mixing[m] * std::norm(U[flav][k]) * std::norm(U[flav][l]) / (Emax[m] - Emin[m]);
 
@@ -271,8 +300,8 @@ public:
 	  }
 
 	  /* Solve the evolution equations */
-	  int s;
-	  gsl_linalg_LU_decomp(M, p, &s);
+	  int _s;
+	  gsl_linalg_LU_decomp(M, p, &_s);
 	  gsl_linalg_LU_solve(M, p, v, x);
 
 	  for(int k=0; k<3; ++k)
@@ -288,19 +317,23 @@ public:
     gsl_permutation_free(p);
     delete[] tbl_Gamma;
     delete[] tbl_alphaTilde;
-    for(int i=0; i<N_bins_E + N_steps_z - 2; ++i)
+    for(uint i=0; i<N_bins_E + N_steps_z - 2; ++i)
       delete[] tbl_alpha[i];
     delete[] tbl_alpha;
+    delete[] alpha_wo_mixing;
 
     // Divide by energy bin size
-    for(int i=0; i<N_bins_E; ++i)
+    for(uint i=0; i<N_bins_E; ++i)
       for(int k=0; k<3; ++k)
 	flux[k][i] /= (Emax[i] - Emin[i]);
 
     // Convert to flavor space
-    for(int i=0; i<N_bins_E; ++i)
-      for(int k=0; k<3; ++k)
-	flux_fla[k][i] = std::norm(U[k][0]) * flux[0][i] + std::norm(U[k][1]) * flux[1][i] + std::norm(U[k][2]) * flux[2][i];
+    for(uint i=0; i<N_bins_E; ++i) {
+      for(int k=0; k<3; ++k) {
+        flux_fla[k][i] = std::norm(U[k][0]) * flux[0][i] + std::norm(U[k][1]) *
+          flux[1][i] + std::norm(U[k][2]) * flux[2][i];
+      }
+    }
   }
 
   double check_energy_conservation(void){
@@ -315,24 +348,21 @@ public:
     evolve();
     double E_int = 0;
     // \int dE * E * flux(E) = \int d(logE) * E^2 * flux(E)
-    for(int i=0; i<N_bins_E; ++i)
-      for(int k=0; k<3; ++k)
+    for(uint i=0; i<N_bins_E; ++i)
+      for(uint k=0; k<3; ++k)
 	E_int += (log(Emax[i]) - log(Emin[i])) * SQR(E_nu[i]) * flux[k][i];
 
     return (E_int - E_FS) / E_FS;
   }
 
-  inline double get_flux(int i, int j){
+  inline double get_flux(uint i, uint j){
     /**
      * Returns the neutrino flux for the mass eigenstate i and energy j
      */
-    if((i<0) || (i>=3)){
+    if(i>=3) {
       std::cerr<<"You asked for the flux of the mass eigenstate "<<i<<", not in [0,1,2]. Zero will be returned."<<std::endl;
       return 0;
-    } else if(j<0) {
-      std::cerr<<"You asked for the flux at the energy bin "<<j<<"<0! Zero will be returned."<<std::endl;
-      return 0;
-    } else if(j > N_bins_E){
+    } else if(j > N_bins_E) {
       std::cerr<<"You asked for the flux at the energy bin "<<j<<", but there are only "<<N_bins_E<<" bins! Zero will be returned."<<std::endl;
       return 0;
     }
@@ -340,15 +370,12 @@ public:
     return flux[i][j];
   }
 
-  inline double get_flux_fla(int i, int j){
+  inline double get_flux_fla(uint i, uint j){
     /**
      * Returns the neutrino flux for the flavor i and energy j
      */
-    if((i<0) || (i>=3)){
+    if(i>=3){
       std::cerr<<"You asked for the flux of the flavor eigenstate "<<i<<", not in [0,1,2]. Zero will be returned."<<std::endl;
-      return 0;
-    } else if(j<0) {
-      std::cerr<<"You asked for the flux at the energy bin "<<j<<"<0! Zero will be returned."<<std::endl;
       return 0;
     } else if(j > N_bins_E){
       std::cerr<<"You asked for the flux at the energy bin "<<j<<", but there are only "<<N_bins_E<<" bins! Zero will be returned."<<std::endl;
@@ -362,14 +389,11 @@ public:
     return N_bins_E;
   }
 
-  inline double get_energy(int i){
+  inline double get_energy(uint i){
     /**
      * Returns the [logarithmic] central energy of the bin i
      */
-    if(i<0) {
-      std::cerr<<"You asked for the energy at the bin "<<i<<"<0! Zero will be returned."<<std::endl;
-      return 0;
-    } else if(i > N_bins_E){
+    if(i > N_bins_E){
       std::cerr<<"You asked for the energy at the bin "<<i<<", but there are only "<<N_bins_E<<" bins! Zero will be returned."<<std::endl;
       return 0;
     }
@@ -377,11 +401,8 @@ public:
     return E_nu[i];
   }
 
-  inline double get_energy_min(int i) {
-    if(i<0) {
-      std::cerr<<"You asked for the energy at the bin "<<i<<"<0! Zero will be returned."<<std::endl;
-      return 0;
-    } else if(i > N_bins_E){
+  inline double get_energy_min(uint i) {
+  if(i > N_bins_E){
       std::cerr<<"You asked for the energy at the bin "<<i<<", but there are only "<<N_bins_E<<" bins! Zero will be returned."<<std::endl;
       return 0;
     }
@@ -519,8 +540,8 @@ private:
   std::complex<double> U[3][3]; // Leptonic mixing matrix
   // See the documentation of the parameters below in the constructor
   bool majorana, non_resonant, normal_ordering;
-  int N_bins_E;
-  int N_steps_z;
+  uint N_bins_E;
+  uint N_steps_z;
   double lEmin, lEmax;
   double zmax;
   int flav;
@@ -538,6 +559,9 @@ private:
      */
   double mn[3] = {0.0, 0.0, 0.0}; // Individual neutrino masses
   double norm_total{1.0}; // Parameter encoding the global normalization of the flux
+
+  // Progress bar
+  indicators::BlockProgressBar progbar;
 
   /* Physics functions */
 
@@ -571,7 +595,7 @@ private:
 	       pow((1+z)/9.06, 3.5*10), -1./10.);
   }
 
-  inline double Lum(double z, double Em, double Ep, int i){
+  inline double Lum(double z, double Em, double Ep, [[maybe_unused]] int i){
     /**
      * Returns
      *   \int_Em^Ep L^i(z, E*(1+z)) dE
@@ -690,7 +714,7 @@ private:
     return res * SQR(MeV_TO_eV);
   }
 
-  double alphaTilde(double Em, double Ep){
+  double alphaTilde([[maybe_unused]] double Em, [[maybe_unused]] double Ep){
     /**
      * Returns
      *  \sum_{kl} \int_Em^Ep dE \int_E^Ep dE_tilde [ dsigma(E_tilde, E)/dE
@@ -1017,7 +1041,10 @@ private:
   //   return tot;
   }
 
-  double alpha(double Em, double Ep, double Em_prime, double Ep_prime){
+  double alpha([[maybe_unused]] double Em,
+               [[maybe_unused]] double Ep,
+               [[maybe_unused]] double Em_prime,
+               [[maybe_unused]] double Ep_prime){
     /**
      * Returns
      *  \sum_{kl} \int_Em^Ep dE \int_Em_prime^Ep_prime dE_tilde [ dsigma(E_tilde, E)/dE
