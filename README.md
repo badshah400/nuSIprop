@@ -1,9 +1,9 @@
 # nuSIpropKK
 
 To compile and run the `nuSIprop` code with KK module incorporated into it, the following sequence of commands is recommended.
-* `meson setup build`
+* `meson setup build` (_only needs to be run once to setup `build` dir; for subsequent re-compilation start from the next step_)
 * `ninja -C build`
-* Check if the executable `./build/nuSIpropKK` is generated.
+* Check if the executable `./build/nuSIpropKK` is generated (_e.g.: `ls -lh ./build/nuSIpropKK`_).
 * Run using `./build/nuSIpropKK <IDX> <mKK>`, where:
     * `<IDX>` is the initial flux spectral index (`float`), and
     * `<mKK>` is the zero-mode `Z′` mass in `eV` (`float`).
