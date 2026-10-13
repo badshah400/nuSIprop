@@ -1,3 +1,19 @@
+# nuSIpropKK
+
+To compile and run the `nuSIprop` code with KK module incorporated into it, the following sequence of commands is recommended.
+* `meson setup build`
+* `ninja -C build`
+* Check if the executable `./build/nuSIpropKK` is generated.
+* Run using `./build/nuSIpropKK <IDX> <mKK>`, where:
+    * `<IDX>` is the initial flux spectral index (`float`), and
+    * `<mKK>` is the zero-mode `Z′` mass in `eV` (`float`).
+
+_N.B._: Requires `meson` and `ninja` installed system-wide for compilation. You will also need the following libraries installed:
+* [fmt](https://fmt.dev/latest/)
+* [gsl](https://www.gnu.org/software/gsl/)
+* [tbb](https://github.com/oneapi-src/oneTBB)
+
+
 # nuSIprop
 This code simulates propagation of astrophysical neutrinos under the presence of neutrino self-interactions. Neutrinos are assumed to follow a power law in energy, and their sources are assumed to be distributed in redshift according to the star formation rate. We also assume that all mass eigenstates are equally produced at sources, and that interactions are diagonal in flavor space. For the neutrino mixing parameters, we assume the [NuFIT 5.0](http://www.nu-fit.org/?q=node/228) best fit values. All these assumptions can be lifted through simple modifications of the code.
 
